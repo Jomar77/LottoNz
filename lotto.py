@@ -12,7 +12,7 @@ def main():
         skewness = input("Enter 'l' for left skewness or 'r' for right skewness: ")
         std_dev = 10
         meanLeft =[14,17]
-        meanRight =[20,23]
+        meanRight =[23,25]
         
         if skewness.lower() == 'l':
             mean = random.choice(meanLeft)
@@ -34,8 +34,10 @@ def main():
                 num = math.ceil(random.gauss(mean, std_dev))
                 
             numarr.append(num)
-            print(numarr[j], end=" ")
         
+        numarr.sort()
+        for num in numarr:
+            print(num, end=",")        
 
         num = math.ceil(random.gauss(5, 3))
         
@@ -45,9 +47,8 @@ def main():
         print("Bonus:", num)
 
         
-        if checkFile(numarr):
-            print("This entry already exists")
-            break
+    if checkFile(numarr):
+        print("This entry already exists")
 
     print()
 
@@ -66,7 +67,7 @@ def checkFile(List):
         csv_reader = csv.reader(csv_file)
         
         for line in csv_reader:
-            if line == List:
+            if line[:4] == List[:4]:
                 return True
     return False
 
