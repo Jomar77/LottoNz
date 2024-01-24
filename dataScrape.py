@@ -10,10 +10,15 @@ def delete_file(file_name):
     else:
         print("The file does not exist.")
 
-def scrape_data(years, months):
+def scrape_data():
+    years = ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023','2024','2025']
+    months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
     for year in years:
         if year == "2001":
-            months = months[2:]
+            months = months[1:]
+        # if 2024, only scrape up to january
+        if year == "2024":
+            months = months[:1]
         for month in months:
             url = f"http://lottoresults.co.nz/lotto/{month}-{year}"
             response = requests.get(url)
@@ -27,14 +32,22 @@ def scrape_data(years, months):
             with open("lotto.csv", "a", newline="") as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerows(numbers_list)
+                
+def scrape_data_ovr(year,month):
+    url = f"http://lottoresults.co.nz/lotto/{month}-{year}"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
 
-            pball_title = soup.find_all("li", class_="draw-result__bonus-ball")
-            powerball_list = [pball_title[i].text.strip() for i in range(7, len(pball_title), 12)]
+    article_titles = soup.find_all("li", class_="draw-result__ball")
+    numbers_list = [title.text.strip() for title in article_titles]
 
-            with open("powerball.csv", "a", newline="") as csvfile:
+    numbers_list = reversed([tuple(numbers_list[i : i + 6]) for i in range(0, len(numbers_list), 6)])
+    
+    with open("lotto.csv", "a", newline="") as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(powerball_list)
+                writer.writerows(numbers_list)
 
+       
 def remove_empty_lines(input_file, output_file):
     with open(input_file, "r") as infile, open(output_file, "w", newline="") as outfile:
         reader = csv.reader(infile)
@@ -57,11 +70,12 @@ for file_name in file_names:
     delete_file(file_name)
 
 # Create a loop for year and month names
-years = ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023']
-months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
 
-scrape_data(years, months)
 
+scrape_data()
+scrape_data_ovr("2024","january")
+
+    
 input_file = "lotto.csv"
 output_file = "output.csv"
 
