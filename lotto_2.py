@@ -22,7 +22,7 @@ def create_dataset(dataset, look_back=1):
         dataY.append(dataset[i + look_back])
     return np.array(dataX), np.array(dataY)
 
-data, scaler = load_and_preprocess_data('output.csv')
+data, scaler = load_and_preprocess_data('output_results.csv')
 
 # Split the data into training and test sets
 train_size = int(len(data) * 0.8)
