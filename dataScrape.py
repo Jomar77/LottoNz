@@ -68,9 +68,6 @@ def scrape_data(years, months):
         
         for year in years:
             for month in months:
-                if year == "2001" and months.index(month) < 2: continue
-                if year == "2024" and month != "january": break
-
                 url = f"http://lottoresults.co.nz/lotto/{month}-{year}"
                 soup = fetch_and_parse_url(url)
                 if soup is None: continue
@@ -81,6 +78,9 @@ def scrape_data(years, months):
                     date_text = card.find('h2', class_='result-card__title--medium').text.strip()
                     try:
                         draw_date = datetime.strptime(date_text, "Lotto Result for %A, %d %B %Y")
+                      # convert draw_date month to its numerical value
+                      
+
                     except ValueError:
                         print(f"Failed to parse date from: {date_text}")
                         continue  # Skip this card if the date fails to parse
@@ -89,7 +89,7 @@ def scrape_data(years, months):
 
                     # Write each row with the draw date and numbers
                     for i in range(0, len(numbers_list), 6):
-                        writer.writerow([draw_date.year, draw_date.strftime("%B"), draw_date.day] + numbers_list[i:i+6])
+                        writer.writerow([draw_date.year, draw_date.month, draw_date.day] + numbers_list[i:i+6])
 
                         print(f"Scraped {month} {year}: {numbers_list[i:i+6]}")
 
