@@ -1,81 +1,57 @@
 import pandas as pd
 import numpy as np
-
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import EarlyStopping
 import tensorflow as tf
 
-
-# Function for data loading and preprocessing
-def load_and_preprocess_data(file_path, header=None, feature_range=(0, 1)):
-    df = pd.read_csv(file_path, header=header)
+# Load and preprocess data
+def load_and_preprocess_data(file_path, feature_range=(0, 1)):
+    df = pd.read_csv(file_path)
     scaler = MinMaxScaler(feature_range=feature_range)
-    scaled_data = scaler.fit_transform(df.values)
+    scaled_data = scaler.fit_transform(df)
     return scaled_data, scaler
 
-# Function to create dataset
+# Create dataset for LSTM
 def create_dataset(dataset, look_back=1):
     dataX, dataY = [], []
-    for i in range(len(dataset)-look_back-1):
-        a = dataset[i:(i+look_back), :]
+    for i in range(len(dataset)-look_back):
+        a = dataset[i:(i+look_back)]
         dataX.append(a)
-        dataY.append(dataset[i + look_back, :])
+        dataY.append(dataset[i + look_back])
     return np.array(dataX), np.array(dataY)
 
-# Callback class with flexible target numbers
-class MyCallback(Callback):
-    def __init__(self, target_numbers, tolerance=1e-2):
-        super(MyCallback, self).__init__()
-        self.target_numbers = target_numbers
-        self.tolerance = tolerance
-
-    def on_epoch_end(self, epoch, logs=None):
-        prediction = self.model.predict(trainX)
-        if np.allclose(prediction, self.target_numbers, atol=self.tolerance):
-            self.model.stop_training = True
-
-# Load and preprocess data
 data, scaler = load_and_preprocess_data('output.csv')
 
 # Split the data into training and test sets
 train_size = int(len(data) * 0.8)
-train, test = data[0:train_size, :], data[train_size:len(data), :]
+train, test = data[0:train_size], data[train_size:len(data)]
 
-# Reshape into X=t and Y=t+1
 look_back = 1
 trainX, trainY = create_dataset(train, look_back)
 testX, testY = create_dataset(test, look_back)
 
-# Reshape input to be [samples, time steps, features]
-trainX = np.reshape(trainX, (trainX.shape[0], trainX.shape[1], trainX.shape[2]))
-trainY = np.reshape(trainY, (trainY.shape[0], trainY.shape[1]))
+# Reshape input for LSTM [samples, time steps, features]
+trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
+testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
 
-# Define model parameters
-input_shape = (look_back, trainX.shape[2])
-target_numbers = np.array([12, 14, 30, 35, 38, 40])
+# Define and compile the LSTM model
+model = Sequential([
+    LSTM(50, input_shape=(1, look_back)),
+    Dense(1)
+])
+model.compile(optimizer='adam', loss='mean_squared_error')
 
-# Build the model
-model = Sequential()
-model.add(Dense(12, activation='relu', input_shape=input_shape))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(trainY.shape[1], activation='linear'))
+# Use early stopping to halt the training when validation loss doesn't improve
+early_stop = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
-# Compile the model
-model.compile(loss='mse', optimizer='adam', metrics=[tf.keras.metrics.CategoricalAccuracy()])
+# Train the model
+model.fit(trainX, trainY, epochs=100, batch_size=1, verbose=2, callbacks=[early_stop], validation_data=(testX, testY))
 
-# Train the model with the callback
-model.fit(trainX, trainY, epochs=100, batch_size=1, verbose=1, callbacks=[MyCallback(target_numbers)])
+# Predict the next value
+last_point_scaled = data[-look_back:].reshape(1, 1, look_back)
+next_point_scaled = model.predict(last_point_scaled)
+next_point = scaler.inverse_transform(next_point_scaled).flatten()[0]
 
-# Predict the next set of numbers
-next_numbers_scaled = model.predict(np.array([data[-1]]).reshape(1, look_back, data.shape[1]))
-next_numbers_scaled_2d = next_numbers_scaled.reshape(1, -1)
-next_numbers = scaler.inverse_transform(next_numbers_scaled_2d).astype(int)[0]
-
-4 11 17 22 28 34
-
-
-
-
-print(f'The predicted next set of numbers is {next_numbers}')
+print(f'The predicted next value is {next_point}')

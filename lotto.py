@@ -1,75 +1,50 @@
 import random
-import math
+import csv
+
+def generate_lottery_numbers(skewness, mean_mapping, std_dev=10, size=6, low=1, high=40):
+    mean = random.choice(mean_mapping[skewness])
+    numbers = set()
+    while len(numbers) < size:
+        num = int(random.gauss(mean, std_dev))
+        if low <= num <= high:
+            numbers.add(num)
+    return sorted(numbers)
+
+def generate_bonus_number(low=1, high=10, std_dev=2):
+    while True:
+        num = int(random.gauss(5, std_dev))
+        if low <= num <= high:
+            return num
+
+def entry_exists(entry):
+    try:
+        with open('lotto_results.csv', 'r') as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for line in csv_reader:
+                if line == entry:
+                    return True
+    except FileNotFoundError:
+        pass  # File doesn't exist, so the entry is unique
+    return False
 
 def main():
     print("Welcome to the Lottery numbers generator")
     num_entries = int(input("How many entries would you like? "))
-    print()
+    mean_mapping = {'l': [14, 17], 'r': [23, 25]}
     
-    for i in range(num_entries):
-        print("Entry", i+1, end=": ")
-        
-        skewness = input("Enter 'l' for left skewness or 'r' for right skewness: ")
-        std_dev = 10
-        meanLeft =[14,17]
-        meanRight =[23,25]
-        
-        if skewness.lower() == 'l':
-            mean = random.choice(meanLeft)
-        elif skewness.lower() == 'r':
-            mean = random.choice(meanRight)
-        else:
+    for _ in range(num_entries):
+        skewness = input("Enter 'l' for left skewness or 'r' for right skewness: ").lower()
+
+        if skewness not in mean_mapping:
             print("Invalid input")
             return
-        
-        
-        numarr = []
-        for j in range(6):
-            #num should not be repeated
-            num = math.ceil(random.gauss(mean, std_dev))
-    
-            #check if num is already in the array, then append it
-            
-            while num < 1 or num > 40 or check(num, numarr):
-                num = math.ceil(random.gauss(mean, std_dev))
-                
-            numarr.append(num)
-        
-        numarr.sort()
-        for num in numarr:
-            print(num, end=",")        
 
-        num = math.ceil(random.gauss(5, 3))
-        
-        while num < 1 or num > 10 or check(num, numarr):
-            num = math.ceil(random.gauss(5, 2))
-        
-        print("Bonus:", num)
+        numbers = generate_lottery_numbers(skewness, mean_mapping)
+        bonus = generate_bonus_number()
+        if entry_exists(numbers):
+            print("This entry already exists")
+        else:
+            print("Entry: " + ','.join(map(str, numbers)) + " Bonus: " + str(bonus))
 
-        
-    if checkFile(numarr):
-        print("This entry already exists")
-
-    print()
-
-#recursive function that checks if the number is already in the array
-def check(num, numarr):
-    return num in numarr
-
-import csv
-
-
-
-#check if the list above is in the csv file
-
-def checkFile(List):
-    with open('output.csv', 'r') as csv_file:
-        csv_reader = csv.reader(csv_file)
-        
-        for line in csv_reader:
-            if line[:4] == List[:4]:
-                return True
-    return False
-
-
-main()
+if __name__ == "__main__":
+    main()
