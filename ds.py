@@ -4,7 +4,7 @@ import csv
 import os
 
 # Simplified global variables
-years = [str(year) for year in range(1987, 2025)]
+years = [str(year) for year in range(2023, 2025)]
 months = [
     "january", "february", "march", "april", "may", "june",
     "july", "august", "september", "october", "november", "december",
@@ -42,59 +42,33 @@ def extract_numbers_before_sep(soup):
             all_numbers.extend(numbers)  # Flatten the list to match previous logic
             
     return all_numbers
-from datetime import datetime
-
-# def extract_date(soup):
-#     """Extracts the draw date from the result-card title."""
-#     title_tag = soup.find('h2', class_='result-card__title result-card__title--medium')
-#     if not title_tag:
-#         return None  # No date found
-#     # Extract the date string
-#     date_str = title_tag.text.strip()
-#     print(f"Extracted date string: {date_str}")
-#     # Parse the date
-#     try:
-#         draw_date = datetime.strptime(date_str, 'Lotto Result for %A, %d %B %Y')
-#         return draw_date
-#     except ValueError as e:
-#         print(f"Failed to parse date: {e}")
-#         return None  # If the date format doesn't match or parsing fails
-
 
 def scrape_data(years, months):
     with open("lotto_results.csv", "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["Year", "Month", "Day", "N1", "N2", "N3", "N4","N5","N6"])  # CSV Header
+        writer.writerow(["N1", "N2", "N3", "N4","N5","N6"])  # CSV Header
         
         for year in years:
             for month in months:
+                # Convert month string to its numerical value
+                month_num = months.index(month) + 1
+                
                 url = f"http://lottoresults.co.nz/lotto/{month}-{year}"
                 soup = fetch_and_parse_url(url)
-                if soup is None: continue
+               
                 
                 # Iterate through each result card
                 result_cards = soup.find_all('div', class_='result-card')
-                for card in result_cards:
-                    date_text = card.find('h2', class_='result-card__title--medium').text.strip()
-                    try:
-                        draw_date = datetime.strptime(date_text, "Lotto Result for %A, %d %B %Y")
-                      # convert draw_date month to its numerical value
-                      
-
-                    except ValueError:
-                        print(f"Failed to parse date from: {date_text}")
-                        continue  # Skip this card if the date fails to parse
+              
+                for card in result_cards:                
                     
                     numbers_list = extract_numbers_before_sep(card)  # Assume this function is adapted to work with a card's soup
 
                     # Write each row with the draw date and numbers
                     for i in range(0, len(numbers_list), 6):
-                        writer.writerow([draw_date.year, draw_date.month, draw_date.day] + numbers_list[i:i+6])
+                        writer.writerow( numbers_list[i:i+6])
 
                         print(f"Scraped {month} {year}: {numbers_list[i:i+6]}")
-
-                    
-
 
 def main():
     # Ensure the output file is fresh

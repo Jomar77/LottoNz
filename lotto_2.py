@@ -1,93 +1,67 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
 from tensorflow.keras.callbacks import EarlyStopping
-import numpy as np
 
-# Load and preprocess data
-def load_and_preprocess_data(file_path):
-    df = pd.read_csv(file_path)
-    # Parsing the datetime information
-    df['Date'] = pd.to_datetime(df['Year'].astype(str) + '-' + df['Month'] + '-' + df['Day'].astype(str))
-    df.drop(['Year', 'Month', 'Day'], axis=1, inplace=True)
-    
-    # For simplicity, let's focus on a single lotto number column if there are multiple
-    # This example assumes a single sequence of numbers; adjust if predicting multiple numbers
-    numbers = df['Numbers'].str.split(',', expand=True).astype(int)[0]  # Adjust this line to accommodate your actual data structure
-    dates = df['Date']
-    
-    # Scaling the numbers - assuming they are in separate columns
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_numbers = scaler.fit_transform(numbers.values.reshape(-1, 1))
-    
-    # Preparing the date features (e.g., year, month as numerical values)
-    df['Year'] = dates.dt.year
-    df['Month'] = dates.dt.month
-    df['Day'] = dates.dt.day
-    # Here you can add more date-related features as needed
-    
-    # Assuming we are using only 'Year', 'Month', and 'Day' for simplicity
-    scaled_dates = scaler.fit_transform(df[['Year', 'Month', 'Day']])
-    
-    # Combining the scaled date features and lotto numbers for model input
-    combined_data = np.hstack((scaled_dates, scaled_numbers))
-    
-    return combined_data, scaler
+# Load the dataset
+file_path = 'lotto_results.csv'  # Adjust as necessary
+df = pd.read_csv(file_path)
 
-# Assuming the rest of the model setup, training, and prediction code follows, with adjustments for combined_data
+# Parse the 'Year', 'Month', 'Day' into a single datetime object
+df['Date'] = pd.to_datetime(df[['Year', 'Month', 'Day']])
 
+# Drop the original 'Year', 'Month', 'Day' columns as they are now redundant
+df.drop(['Year', 'Month', 'Day'], axis=1, inplace=True)
 
+# Assuming you want to predict the next draw based on previous draws
+# Here, you could create features based on historical draws, for simplicity, let's flatten the data
+# NOTE: This is a simple transformation and might not directly predict the 'next' numbers without further feature engineering
+
+# Flatten the dataset
+data = df.drop('Date', axis=1).values  # Excluding date from features for simplicity
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(data)
+
+# Function to create dataset for LSTM
 def create_dataset(dataset, look_back=1):
     dataX, dataY = [], []
-    for i in range(len(dataset)-look_back-1):
-        a = dataset[i:(i + look_back), :-1]  # All features except the last column (target)
+    for i in range(len(dataset) - look_back):
+        a = dataset[i:(i + look_back)]
         dataX.append(a)
-        dataY.append(dataset[i + look_back, -1])  # Target variable (last column)
+        dataY.append(dataset[i + look_back])
     return np.array(dataX), np.array(dataY)
 
-# Load and preprocess the dataset
-data, scaler = load_and_preprocess_data('lotto_results.csv')
-
-# Parameters
+# Specify the look_back window
 look_back = 1
+datasetX, datasetY = create_dataset(scaled_data, look_back)
 
-# Create dataset for LSTM
-train_size = int(len(data) * 0.8)
-test_size = len(data) - train_size
-train, test = data[0:train_size,:], data[train_size:len(data),:]
-trainX, trainY = create_dataset(train, look_back)
-testX, testY = create_dataset(test, look_back)
+# Split the data into training and test sets
+train_size = int(len(datasetX) * 0.8)
+trainX, testX = datasetX[:train_size], datasetX[train_size:]
+trainY, testY = datasetY[:train_size], datasetY[train_size:]
 
-# Reshape input to be [samples, time steps, features]
+# Reshape input for LSTM [samples, time steps, features]
 trainX = np.reshape(trainX, (trainX.shape[0], look_back, trainX.shape[2]))
 testX = np.reshape(testX, (testX.shape[0], look_back, testX.shape[2]))
 
-
-# Define the LSTM model
-model = Sequential()
-model.add(LSTM(50, input_shape=(look_back, trainX.shape[2])))
-model.add(Dense(1))
+# Define and compile the LSTM model
+model = Sequential([
+    LSTM(50, input_shape=(look_back, trainX.shape[2])),
+    Dense(trainY.shape[1])
+])
 model.compile(optimizer='adam', loss='mean_squared_error')
 
-
-# Early stopping
-early_stop = EarlyStopping(monitor='val_loss', patience=10)
+# Use early stopping to halt the training when validation loss doesn't improve
+early_stop = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
 # Train the model
-history = model.fit(trainX, trainY, epochs=100, batch_size=1, verbose=2, validation_data=(testX, testY), callbacks=[early_stop])
+model.fit(trainX, trainY, epochs=100, batch_size=1, verbose=2, callbacks=[early_stop], validation_data=(testX, testY))
 
+# Predict the next draw (simplified approach)
+last_draw_scaled = scaled_data[-1].reshape(1, 1, scaled_data.shape[1])
+next_draw_scaled = model.predict(last_draw_scaled)
+next_draw = scaler.inverse_transform(next_draw_scaled).flatten()
 
-# Making predictions
-trainPredict = model.predict(trainX)
-testPredict = model.predict(testX)
-
-# Invert predictions
-trainPredict = scaler.inverse_transform(trainPredict)
-trainY = scaler.inverse_transform([trainY])
-testPredict = scaler.inverse_transform(testPredict)
-testY = scaler.inverse_transform([testY])
-
-# Example: printing the last prediction
-print(f'Last training prediction: {trainPredict[-1]}, Actual: {trainY[0][-1]}')
-print(f'Last test prediction: {testPredict[-1]}, Actual: {testY[0][-1]}')
+print(f'The predicted next draw numbers are: {next_draw}')
