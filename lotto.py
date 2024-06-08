@@ -25,7 +25,6 @@ def entry_exists(entry):
                     return True
     except FileNotFoundError:
         pass  # File doesn't exist, so the entry is unique
-    return False
 
 def main():
     print("Welcome to the Lottery numbers generator")

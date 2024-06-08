@@ -1,28 +1,35 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
 import csv
 import os
+import time
 
 # Simplified global variables
-years = [str(year) for year in range(2023, 2025)]
+years = [str(year) for year in range(1997, 2025)]
 months = [
     "january", "february", "march", "april", "may", "june",
     "july", "august", "september", "october", "november", "december",
 ]
 
-# Utilize a session for requests
-session = requests.Session()
+# Set up Selenium WebDriver for Firefox
+firefox_options = Options()
+firefox_options.binary_location="C:\\Program Files\\Mozilla Firefox\\firefox.exe"
+firefox_options.add_argument("--headless")  # Run in headless mode (no GUI)
+service = Service(executable_path="C:\\Users\\jomna\\Downloads\\geckodriver.exe")
+driver = webdriver.Firefox(service=service, options=firefox_options)
 
 def fetch_and_parse_url(url):
-    """Fetches a webpage and returns its BeautifulSoup parsed object."""
-    response = session.get(url)
-    if response.status_code == 200:
-        return BeautifulSoup(response.content, 'html.parser')
-    else:
-        print(f"Failed to scrape {url}")
-        return None
+    """Fetches a webpage using Selenium and returns its BeautifulSoup parsed object."""
+    driver.get(url)
+    time.sleep(3)  # Adjust sleep time as needed for the page to load completely
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    return soup
 
-def extract_numbers_before_sep(soup):
+def extract_numbers_before_separator(soup):
     """Finds and extracts the 6 numbers preceding each 'draw-result__sep' separator."""
     separators = soup.find_all('li', class_='draw-result__sep')
     
@@ -46,29 +53,23 @@ def extract_numbers_before_sep(soup):
 def scrape_data(years, months):
     with open("lotto_results.csv", "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["N1", "N2", "N3", "N4","N5","N6"])  # CSV Header
         
         for year in years:
             for month in months:
-                # Convert month string to its numerical value
-                month_num = months.index(month) + 1
-                
                 url = f"http://lottoresults.co.nz/lotto/{month}-{year}"
                 soup = fetch_and_parse_url(url)
-               
+                if soup is None:
+                    print(f"Failed to scrape {url}")
+                    continue
                 
                 # Iterate through each result card
                 result_cards = soup.find_all('div', class_='result-card')
-              
-                for card in result_cards:                
-                    
-                    numbers_list = extract_numbers_before_sep(card)  # Assume this function is adapted to work with a card's soup
-
-                    # Write each row with the draw date and numbers
+                for card in result_cards:
+                    numbers_list = extract_numbers_before_separator(card)  
                     for i in range(0, len(numbers_list), 6):
-                        writer.writerow( numbers_list[i:i+6])
-
-                        print(f"Scraped {month} {year}: {numbers_list[i:i+6]}")
+                        writer.writerow(numbers_list[i:i+6])
+                    
+                    print(f"Scraped {month} {year}: {numbers_list[i:i+6]}")
 
 def main():
     # Ensure the output file is fresh
@@ -78,6 +79,7 @@ def main():
 
     scrape_data(years, months)
     print("Scraping complete. Data saved to lotto_results.csv.")
+    driver.quit()  # Close the Selenium WebDriver
 
 if __name__ == "__main__":
     main()
