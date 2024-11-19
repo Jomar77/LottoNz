@@ -13,6 +13,10 @@ def find_line_with_numbers(file_path, numbers_to_find):
             # Check if all desired numbers are in the current row
             if all(num in row for num in numbers_to_find):
                 print(f"Found numbers {numbers_to_find} in row {row_number}: {row}")
+            else:
+                #print the line with the nearest output
+                print("something here")
+
             
 
 def main():

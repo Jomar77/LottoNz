@@ -24,12 +24,12 @@ def entry_exists(entry):
                 if line == entry:
                     return True
     except FileNotFoundError:
-        pass  # File doesn't exist, so the entry is unique
+        print("jom its broken") # File doesn't exist, so the entry is unique
 
 def main():
     print("Welcome to the Lottery numbers generator")
     num_entries = int(input("How many entries would you like? "))
-    mean_mapping = {'l': [14, 17], 'r': [23, 25]}
+    mean_mapping = {'l': [13, 17], 'r': [23, 26]}
     
     for _ in range(num_entries):
         skewness = input("Enter 'l' for left skewness or 'r' for right skewness: ").lower()
