@@ -24,10 +24,11 @@ def generate_bonus_number(low=1, high=10, std_dev=2):
 
 def entry_exists(entry):
     try:
-        with open('lotto_results.csv', 'r') as csv_file:
+        with open('lotto-data/lotto_results.csv', 'r') as csv_file:
             csv_reader = csv.reader(csv_file)
             for line in csv_reader:
-                if line == entry:
+                # Convert both to strings for comparison
+                if [str(num) for num in entry] == line:
                     return True
     except FileNotFoundError:
         print("File doesn't exist, so the entry is unique")

@@ -93,7 +93,7 @@ def combi_counter(df):
     print("\nAnalysis of rows with 5+ matching numbers:")
     print(f"Total matching pairs found: {len(matching_pairs)}")
     print("\nMost frequent numbers in matching rows:")
-    print(number_freq.head())
+    print(number_freq.head(6))
     
     if numbers_in_matches:
         print("\nStatistical Summary:")
