@@ -2,7 +2,7 @@ import pandas as pd
 import random
 
 # Load the Excel file with the correct sheet name
-file_path = r"lotto-data\october.xlsx"
+file_path = r"lotto-data\november.xlsx"
 sheet_name = 'Lotto Powerball'
 
 # Load the Excel file
