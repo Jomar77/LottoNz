@@ -7,6 +7,7 @@
 secrets.json
 config/secrets.json
 *.secret
+results.json
 
 # Environment Variables
 .envrc
