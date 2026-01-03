@@ -1,4 +1,152 @@
-# LottoNz 🎰
+# LottoNz Smart Picker
+
+A modern, data-driven lottery number generator using weighted algorithms based on historical NZ Lotto Powerball data.
+
+## Project Overview
+
+This project consists of two main components:
+
+### Frontend (React App)
+- Modern React 18 + TypeScript application
+- Weighted number generation algorithm
+- Beautiful, responsive UI with Tailwind CSS
+- Customizable generation preferences
+- Real-time client-side processing
+
+### Backend (Python Scripts)
+- Data scraping and cleaning utilities
+- Excel to JSON conversion
+- Historical data analysis
+- Original Python-based lottery algorithm (lotto_V3.py)
+
+## Quick Start
+
+### Frontend Setup
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+
+Visit: [http://localhost:5173/LottoNz/](http://localhost:5173/LottoNz/)
+
+### Update Data
+```bash
+cd Backend
+python convert_to_json.py
+```
+
+## Features
+
+✨ **Smart Number Generation**
+- Frequency-weighted algorithm (1834 historical draws)
+- Spread control: tight (≤20), wide (≥15), or mixed
+- Leaning bias: left (1-13), middle (15-25), or right (27-40)
+- Consecutive number preferences
+- Powerball: random 1-10
+
+🎨 **Modern UI**
+- NZ-themed green/blue color scheme
+- Fully responsive design
+- Smooth animations
+- Collapsible preferences panel
+- Latest draw display
+
+📊 **Data-Driven**
+- 1834 historical draws (2001-2025)
+- Real-time frequency analysis
+- Unique combination validation
+
+## Project Structure
+
+```
+LottoNz/
+├── Frontend/                 # React application
+│   ├── src/
+│   │   ├── App.tsx          # Main component
+│   │   ├── utils.ts         # Generation algorithms
+│   │   ├── dataService.ts   # Data fetching
+│   │   └── types.ts         # TypeScript types
+│   ├── public/
+│   │   └── results.json     # Historical data (1834 draws)
+│   └── package.json
+│
+├── Backend/                  # Python scripts
+│   ├── lotto_V3.py          # Original Python algorithm
+│   ├── convert_to_json.py   # Excel → JSON converter
+│   ├── datacleaner.py       # Data cleaning utilities
+│   └── lotto-data/
+│       └── december.xlsx    # Source data
+│
+└── README.md                # This file
+```
+
+## Algorithm
+
+The weighted algorithm follows these steps:
+
+1. **Calculate Frequencies**: Count occurrences of each number (1-40) in historical data
+2. **Apply Leaning Bias**: Multiply weights by 2x for preferred range
+3. **Weighted Selection**: Use cumulative probability for random selection
+4. **Validate Constraints**: Check spread and consecutive requirements
+5. **Generate Powerball**: Random number 1-10 (no weighting)
+
+Max 1000 attempts to find valid combination, falls back to default if needed.
+
+## Data Sources
+
+- **Primary**: `Backend/lotto-data/december.xlsx` (Excel format)
+- **Converted**: `Frontend/public/results.json` (JSON format)
+- **Format**: `{ date: string, numbers: number[], powerball: number }`
+
+## Technologies
+
+**Frontend:**
+- React 18, TypeScript, Vite
+- Tailwind CSS, Lucide React
+- Modern ES modules
+
+**Backend:**
+- Python 3.x
+- pandas (Excel processing)
+- Selenium (web scraping - optional)
+
+## Development
+
+### Frontend Development
+```bash
+cd Frontend
+npm run dev          # Start dev server
+npm run build        # Build for production
+npm run preview      # Preview production build
+```
+
+### Update Lottery Data
+```bash
+cd Backend
+python convert_to_json.py
+```
+
+This reads `lotto-data/december.xlsx` and generates `Frontend/public/results.json`.
+
+## Deployment
+
+1. Build the frontend:
+```bash
+cd Frontend
+npm run build
+```
+
+2. Deploy `Frontend/dist/` to your hosting service
+3. Configure for GitHub Pages (base path: `/LottoNz/`)
+
+## License
+
+Private project - All rights reserved
+
+## Author
+
+Created for NZ Lotto Powerball analysis and smart number generation. 🎰
 
 A customizable New Zealand Lotto Powerball number generator that uses historical data analysis and weighted probability to generate unique lottery number combinations.
 
