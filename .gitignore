@@ -1,0 +1,65 @@
+# Secrets and API Keys
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+secrets.json
+config/secrets.json
+*.secret
+
+# Environment Variables
+.envrc
+
+# API Keys and Tokens
+api_keys.txt
+github_token.txt
+*.token
+
+# Credentials
+credentials.json
+auth.json
+
+# Private Configuration
+config.private.json
+settings.private.json
+
+# Python Virtual Environment
+Backend/.venv/
+Backend/venv/
+Backend/env/
+*.pyc
+__pycache__/
+
+# Node Modules
+Frontend/node_modules/
+node_modules/
+
+# Build Outputs
+Frontend/build/
+Frontend/dist/
+Frontend/.next/
+Frontend/out/
+
+# IDE and Editor Files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary Files
+*.tmp
+*.temp
+.cache/
