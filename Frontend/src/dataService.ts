@@ -1,8 +1,6 @@
 import { LotteryResult } from './types';
 
-const DATA_URL = import.meta.env.PROD 
-  ? 'https://raw.githubusercontent.com/jomar77/LottoNz/main/data/results.json'
-  : 'public/results.json';
+const DATA_URL = '/results.json';
 
 export async function fetchLotteryData(): Promise<LotteryResult[]> {
   try {
