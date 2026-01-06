@@ -26,8 +26,21 @@ export function isUnique(numbers: number[], historicalData: LotteryResult[]): bo
   return true;
 }
 
+// Gaussian (normal) distribution using Box-Muller transform
+function gaussianRandom(mean = 0, stddev = 1): number {
+  let u = 0;
+  let v = 0;
+  while (u === 0) u = Math.random(); // Must use uniform random for Box-Muller
+  while (v === 0) v = Math.random(); // Must use uniform random for Box-Muller
+  const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  return z * stddev + mean;
+}
+
 export function generatePowerball(): number {
-  return Math.floor(Math.random() * 10) + 1;
+  const val = Math.round(gaussianRandom(5.5, 2));
+  if (val < 1) return 1;
+  if (val > 10) return 10;
+  return val;
 }
 
 function calculateFrequencies(historicalData: LotteryResult[]): Map<number, number> {
@@ -107,7 +120,7 @@ export function generateNumbers(
       (preferences.consecutive === 'yes' && hasConsec) ||
       (preferences.consecutive === 'no' && !hasConsec);
     
-    if (spreadValid && consecValid) {
+    if (spreadValid && consecValid && isUnique(numbers, historicalData)) {
       return {
         numbers: numbers.sort((a, b) => a - b),
         powerball: generatePowerball()
