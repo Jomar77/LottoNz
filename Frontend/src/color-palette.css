@@ -1,0 +1,188 @@
+/*
+ * DEPRECATED: This file is kept as a reference only.
+ * Tailwind CSS (tailwind.config.js) is the source of truth for all color definitions.
+ * 
+ * Active colors:
+ * - base: #3c2d66 (dark-amethyst) - Main brand color
+ * - accent: #fe8302 (princeton-orange) - Powerball & CTAs
+ * - highlight-blue: #0190d6 (blue-bell) - Supporting color
+ * - highlight-cream: #fef68a (banana-cream) - Subtle highlights
+ */
+
+/* CSS HEX */
+--white: #ffffffff;
+--dark-amethyst: #3c2d66ff;
+--banana-cream: #fef68aff;
+--blue-bell: #0190d6ff;
+--black: #020202ff;
+--princeton-orange: #fe8302ff;
+--amethyst-smoke: #9785b8ff;
+--frozen-lake: #6fcdf6ff;
+--terracotta-clay: #a15e50ff;
+--medium-jungle: #329c52ff;
+
+/* CSS HSL */
+--white: hsla(0, 0%, 100%, 1);
+--dark-amethyst: hsla(256, 39%, 29%, 1);
+--banana-cream: hsla(56, 98%, 77%, 1);
+--blue-bell: hsla(200, 99%, 42%, 1);
+--black: hsla(0, 0%, 1%, 1);
+--princeton-orange: hsla(31, 99%, 50%, 1);
+--amethyst-smoke: hsla(261, 26%, 62%, 1);
+--frozen-lake: hsla(198, 88%, 70%, 1);
+--terracotta-clay: hsla(10, 34%, 47%, 1);
+--medium-jungle: hsla(138, 51%, 40%, 1);
+
+/* SCSS HEX */
+$white: #ffffffff;
+$dark-amethyst: #3c2d66ff;
+$banana-cream: #fef68aff;
+$blue-bell: #0190d6ff;
+$black: #020202ff;
+$princeton-orange: #fe8302ff;
+$amethyst-smoke: #9785b8ff;
+$frozen-lake: #6fcdf6ff;
+$terracotta-clay: #a15e50ff;
+$medium-jungle: #329c52ff;
+
+/* SCSS HSL */
+$white: hsla(0, 0%, 100%, 1);
+$dark-amethyst: hsla(256, 39%, 29%, 1);
+$banana-cream: hsla(56, 98%, 77%, 1);
+$blue-bell: hsla(200, 99%, 42%, 1);
+$black: hsla(0, 0%, 1%, 1);
+$princeton-orange: hsla(31, 99%, 50%, 1);
+$amethyst-smoke: hsla(261, 26%, 62%, 1);
+$frozen-lake: hsla(198, 88%, 70%, 1);
+$terracotta-clay: hsla(10, 34%, 47%, 1);
+$medium-jungle: hsla(138, 51%, 40%, 1);
+
+/* SCSS RGB */
+$white: rgba(255, 255, 255, 1);
+$dark-amethyst: rgba(60, 45, 102, 1);
+$banana-cream: rgba(254, 246, 138, 1);
+$blue-bell: rgba(1, 144, 214, 1);
+$black: rgba(2, 2, 2, 1);
+$princeton-orange: rgba(254, 131, 2, 1);
+$amethyst-smoke: rgba(151, 133, 184, 1);
+$frozen-lake: rgba(111, 205, 246, 1);
+$terracotta-clay: rgba(161, 94, 80, 1);
+$medium-jungle: rgba(50, 156, 82, 1);
+
+/* SCSS Gradient */
+$gradient-top: linear-gradient(
+  0deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-right: linear-gradient(
+  90deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-bottom: linear-gradient(
+  180deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-left: linear-gradient(
+  270deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-top-right: linear-gradient(
+  45deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-bottom-right: linear-gradient(
+  135deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-top-left: linear-gradient(
+  225deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-bottom-left: linear-gradient(
+  315deg,
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);
+$gradient-radial: radial-gradient(
+  #ffffffff,
+  #3c2d66ff,
+  #fef68aff,
+  #0190d6ff,
+  #020202ff,
+  #fe8302ff,
+  #9785b8ff,
+  #6fcdf6ff,
+  #a15e50ff,
+  #329c52ff
+);

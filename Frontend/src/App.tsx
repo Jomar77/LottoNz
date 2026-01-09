@@ -47,31 +47,31 @@ function App() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-3">
-            <Sparkles className="w-12 h-12 text-nz-green-300" />
+            <Sparkles className="w-12 h-12 text-base/60" />
             LottoNz Smart Picker
-            <Sparkles className="w-12 h-12 text-nz-blue-300" />
+            <Sparkles className="w-12 h-12 text-highlight-blue/60" />
           </h1>
-          <p className="text-nz-blue-100 text-lg">Weighted number generation based on historical data</p>
+          <p className="text-highlight-blue/30 text-lg">Weighted number generation based on historical data</p>
         </div>
 
         {/* Latest Result Card */}
         {latestResult && (
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20 shadow-2xl">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-nz-green-300" />
+              <TrendingUp className="w-5 h-5 text-base/60" />
               <h2 className="text-xl font-semibold text-white">Latest Result</h2>
-              <span className="text-nz-blue-200 ml-auto">{latestResult.date}</span>
+              <span className="text-highlight-blue/40 ml-auto">{latestResult.date}</span>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               {latestResult.numbers.map((num, idx) => (
                 <div
                   key={idx}
-                  className="w-14 h-14 rounded-full bg-gradient-to-br from-nz-green-400 to-nz-green-600 flex items-center justify-center text-white text-xl font-bold shadow-lg"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-xl font-bold shadow-lg"
                 >
                   {num}
                 </div>
               ))}
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-xl font-bold shadow-lg border-2 border-white">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-xl font-bold shadow-lg border-2 border-white">
                 {latestResult.powerball}
               </div>
             </div>
@@ -87,7 +87,7 @@ function App() {
               className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-nz-blue-600" />
+                <Settings className="w-5 h-5 text-highlight-blue" />
                 <span className="font-semibold text-gray-700">Generation Preferences</span>
               </div>
               {showPreferences ? (
@@ -111,7 +111,7 @@ function App() {
                         onClick={() => setPreferences({ ...preferences, spread: option })}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                           preferences.spread === option
-                            ? 'bg-nz-green-600 text-white shadow-md'
+                            ? 'bg-base text-white shadow-md'
                             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                         }`}
                       >
@@ -133,7 +133,7 @@ function App() {
                         onClick={() => setPreferences({ ...preferences, leaning: option })}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                           preferences.leaning === option
-                            ? 'bg-nz-blue-600 text-white shadow-md'
+                            ? 'bg-highlight-blue text-white shadow-md'
                             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                         }`}
                       >
@@ -155,7 +155,7 @@ function App() {
                         onClick={() => setPreferences({ ...preferences, consecutive: option })}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                           preferences.consecutive === option
-                            ? 'bg-nz-green-600 text-white shadow-md'
+                            ? 'bg-base text-white shadow-md'
                             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                         }`}
                       >
@@ -173,7 +173,7 @@ function App() {
             <button
               onClick={handleGenerate}
               disabled={loading || data.length === 0}
-              className="w-full py-4 bg-gradient-to-r from-nz-green-600 to-nz-blue-600 text-white text-xl font-bold rounded-xl hover:from-nz-green-700 hover:to-nz-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="w-full py-4 bg-gradient-to-r from-base to-highlight-blue text-white text-xl font-bold rounded-xl hover:from-base/90 hover:to-highlight-blue/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               {loading ? 'Loading Data...' : 'Generate Lucky Numbers'}
             </button>
@@ -191,7 +191,7 @@ function App() {
           {/* Generated Numbers Display */}
           {generatedNumbers && (
             <div className="px-6 pb-6">
-              <div className="bg-gradient-to-br from-nz-green-50 to-nz-blue-50 rounded-xl p-6 border-2 border-nz-green-200">
+              <div className="bg-gradient-to-br from-base/10 to-highlight-blue/10 rounded-xl p-6 border-2 border-base/20">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                   Your Lucky Numbers
                 </h3>
@@ -199,13 +199,13 @@ function App() {
                   {generatedNumbers.numbers.map((num, idx) => (
                     <div
                       key={idx}
-                      className="w-16 h-16 rounded-full bg-gradient-to-br from-nz-green-500 to-nz-green-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg animate-bounce"
+                      className="w-16 h-16 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-2xl font-bold shadow-lg animate-bounce"
                       style={{ animationDelay: `${idx * 100}ms`, animationDuration: '1s', animationIterationCount: '1' }}
                     >
                       {num}
                     </div>
                   ))}
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white animate-bounce"
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white animate-bounce"
                     style={{ animationDelay: '600ms', animationDuration: '1s', animationIterationCount: '1' }}
                   >
                     {generatedNumbers.powerball}
