@@ -51,7 +51,7 @@ function App() {
             LottoNz Smart Picker
             <Sparkles className="w-12 h-12 text-highlight-blue/60" />
           </h1>
-          <p className="text-highlight-blue/30 text-lg">Weighted number generation based on historical data</p>
+          <p className="text-white text-lg">Weighted number generation based on historical data</p>
         </div>
 
         {/* Latest Result Card */}
