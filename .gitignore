@@ -60,6 +60,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Scraper Runtime Files
+Backend/dataScrape/last_run.json
+Backend/task_schedule.xml
+
 # Temporary Files
 *.tmp
 *.temp
