@@ -9,10 +9,14 @@ import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
+
+# Add parent directory to path for imports
+SCRIPT_DIR = Path(__file__).parent
+sys.path.insert(0, str(SCRIPT_DIR))
+
 import mylotto_scraper
 
 # File paths
-SCRIPT_DIR = Path(__file__).parent
 LAST_RUN_FILE = SCRIPT_DIR / 'last_run.json'
 LOG_FILE = SCRIPT_DIR / 'scraper.log'
 

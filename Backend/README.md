@@ -1,177 +1,202 @@
 # LottoNZ Backend
 
-Backend services for the LottoNZ lottery analysis application.
+Python backend for lottery number generation and data scraping.
 
-## Setup
-
-### Prerequisites
-
-- Python 3.8 or higher
-- Firefox browser (geckodriver will be automatically downloaded)
-
-### Installation
-
-1. Install Python dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-2. Create environment configuration (optional):
-```bash
-copy .env.example .env
-```
-
-3. Edit `.env` file only if needed:
-- Set `FIREFOX_PATH` only if Firefox is in a non-standard location
-- Geckodriver is automatically downloaded and managed by webdriver-manager
-
-### Setting Up the Scheduled Scraper
-
-The scheduled scraper runs every Sunday at 5:00 PM to fetch the latest lottery data from mylotto.co.nz.
-
-#### Automatic Setup (Recommended)
-
-1. Run the scheduler setup script:
-```bash
-setup_scheduler.bat
-```
-
-2. Run the startup check setup script:
-```bash
-run_on_startup.bat
-```
-
-This creates two Windows scheduled tasks:
-- **LottoNZ_Weekly_Scraper**: Runs every Sunday at 5:00 PM
-- **LottoNZ_Startup_Check**: Runs at PC startup to catch missed scrapes
-
-#### Manual Testing
-
-Test the scraper manually:
-```bash
-python dataScrape\mylotto_scraper.py
-```
-
-Test the scheduler logic:
-```bash
-python dataScrape\scheduler.py
-```
-
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 Backend/
-├── dataScrape/
-│   ├── ds.py                    # Legacy scraper (lottoresults.co.nz)
-│   ├── ds_selenium.py           # Alternative legacy scraper
-│   ├── mylotto_scraper.py       # New MyLotto scraper
-│   ├── scheduler.py             # Scheduling logic
-│   ├── last_run.json            # Tracks last scraper execution
-│   └── scraper.log              # Rotating log file (auto-generated)
-│
-├── lotto-data/
-│   ├── lotto_results.csv        # Raw lottery numbers
-│   └── data.csv                 # Additional data
-│
-├── convert_to_json.py           # Converts data to JSON for frontend
-├── datacleaner.py               # Data cleaning utilities
-├── lotto_V3.py                  # Main analysis script
-├── requirements.txt             # Python dependencies
-├── .env                         # Environment configuration (create from .env.example)
-├── .env.example                 # Environment configuration template
-├── setup_scheduler.bat          # Setup weekly scheduled task
-└── run_on_startup.bat           # Setup startup check task
+├── src/
+│   ├── Core/           # Business logic
+│   │   └── lotto_generator.py
+│   ├── Scrapers/       # Web scrapers
+│   │   ├── mylotto_scraper.py
+│   │   └── scheduler.py
+│   └── Utils/          # Helper functions
+│       ├── data_cleaner.py
+│       ├── file_search.py
+│       └── json_converter.py
+├── tests/              # Unit tests
+├── scripts/            # Setup and deployment scripts
+│   └── run_scheduler.py
+└── requirements.txt    # Python dependencies
 ```
 
-## Scheduled Scraper Details
+## ⚙️ Setup
 
-### How It Works
+### Prerequisites
+- Python 3.8 or higher
+- Firefox browser (for web scraping)
 
-1. **Weekly Schedule**: The scraper runs every Sunday at 5:00 PM NZ time
-2. **Missed Run Recovery**: If the PC is off during the scheduled time, the startup task will catch up when the PC restarts (if more than 7 days have passed)
-3. **Duplicate Prevention**: The scheduler checks `last_run.json` to prevent running multiple times in the same week
-4. **Logging**: All activity is logged to `dataScrape\scraper.log` with automatic rotation (max 10MB per file, keeps 5 backups)
+### 1. Create Virtual Environment (at ROOT level)
 
-### Managing Scheduled Tasks
+⚠️ **IMPORTANT**: Create `.venv` at the **root** level (LottoNZ/), NOT in Backend/
 
-View scheduled tasks:
 ```bash
-schtasks /query /tn LottoNZ_Weekly_Scraper /v /fo LIST
-schtasks /query /tn LottoNZ_Startup_Check /v /fo LIST
+# Navigate to project root
+cd LottoNZ
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate it:
+# Windows:
+.venv\Scripts\activate
+
+# macOS/Linux:
+source .venv/bin/activate
 ```
 
-Run manually:
+### 2. Install Dependencies
 ```bash
-schtasks /run /tn LottoNZ_Weekly_Scraper
+cd Backend
+pip install -r requirements.txt
+
+# Dev dependencies (for testing)
+pip install -r requirements-dev.txt
 ```
 
-Delete tasks:
+### 3. Configure Environment
 ```bash
-schtasks /delete /tn LottoNZ_Weekly_Scraper /f
-schtasks /delete /tn LottoNZ_Startup_Check /f
+copy .env.example .env
+# Edit .env with your credentials if needed
 ```
 
-### Logs
+## 🚀 Usage
 
-Check scraper logs:
+### Run Scraper
 ```bash
-type dataScrape\scraper.log
+# One-time run
+python -m src.Scrapers.scheduler
+
+# Or use the helper script
+python scripts/run_scheduler.py --now
 ```
 
-Check last run status:
+### Setup Scheduled Scraping
+
+#### Cross-Platform (Recommended)
 ```bash
-type dataScrape\last_run.json
+python scripts/run_scheduler.py
 ```
 
-## Configuration
+#### Windows Legacy (using .bat files)
+```bash
+# These still work but will be deprecated
+Scripts\setup_scheduler.bat
+```
+
+### Generate Lotto Numbers
+```bash
+python -m src.Core.lotto_generator
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest tests/
+
+# Run with coverage
+pytest tests/ --cov=src --cov-report=html
+
+# Run specific test
+pytest tests/test_lotto_generator.py
+```
+
+## 📝 Development
+
+### Adding New Features
+1. Create module in appropriate folder (Core/Scrapers/Utils)
+2. Add corresponding test in `tests/`
+3. Update `__init__.py` if creating new module
+4. Run tests before committing
+
+### Code Style
+- Follow PEP 8
+- Use type hints where appropriate
+- Add docstrings to all public functions/classes
+
+## 🔧 Troubleshooting
+
+### Virtual Environment Issues
+
+**Error**: "Unable to handle ... .venv\Scripts\python.exe"
+
+**Solution**: 
+1. Delete `.venv` from Backend folder if it exists
+2. Create `.venv` at root level: `LottoNZ/.venv` (not Backend/.venv)
+3. Reload VS Code:
+   - Press `Ctrl+Shift+P`
+   - Type "Developer: Reload Window"
+4. Select Python interpreter:
+   - Press `Ctrl+Shift+P`
+   - Type "Python: Select Interpreter"
+   - Choose the one with `.venv` in the path
+
+### Import Errors
+
+Make sure you're running from the Backend directory with `-m` flag:
+```bash
+cd Backend
+python -m src.Core.lotto_generator  # ✅ Correct
+# NOT: python src/Core/lotto_generator.py  # ❌ Wrong
+```
+
+### Scraper Errors
+
+```bash
+# Check logs
+type src\Scrapers\scraper.log
+
+# Check last run status
+type src\Scrapers\last_run.json
+
+# Test manually
+python -m src.Scrapers.mylotto_scraper
+```
+
+## 📂 Data
+
+Data files live in `../Data/` (outside Backend):
+- `raw/` - Scraped data from MyLotto NZ
+- `processed/` - Cleaned data ready for analysis
+
+## 🛠️ Tech Stack
+
+- **Python 3.8+**
+- **Selenium** - Web scraping
+- **Pandas** - Data processing  
+- **Schedule** - Task scheduling
+- **pytest** - Testing framework
+
+## 📋 Configuration
 
 Environment variables (`.env`):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `FIREFOX_PATH` | Path to Firefox executable (optional) | Auto-detected |
+| `FIREFOX_PATH` | Path to Firefox executable | Auto-detected |
 | `MYLOTTO_URL` | URL to scrape | `https://mylotto.co.nz/game-information` |
 | `MAX_RETRIES` | Number of retry attempts | `3` |
 | `RETRY_DELAY` | Delay between retries (seconds) | `60` |
 | `LOG_LEVEL` | Logging level | `INFO` |
 
-## Troubleshooting
+## 🚧 TODO
 
-### Scraper Not Running
+- [ ] Rename folders to lowercase (Core → core, Utils → utils, Scrapers → scrapers)
+- [ ] Add CI/CD pipeline (GitHub Actions)
+- [ ] Improve test coverage (>80%)
+- [ ] Add FastAPI REST endpoints
+- [ ] Docker containerization
+- [ ] Database integration (PostgreSQL/SQLite)
 
-1. Check if tasks are created:
-   ```bash
-   schtasks /query /tn LottoNZ_Weekly_Scraper
-   ```
+## 📖 Documentation
 
-2. Check scraper log for errors:
-   ```bash
-   type dataScrape\scraper.log
-   ```
+- See `../Docs/` for setup guides and reference docs
+- Each module has inline docstrings
+- Run `pydoc` for API documentation
 
-3. Test scraper manually:
-   ```bash
-   python dataScrape\mylotto_scraper.py
-   ```
-
-### WebDriver Errors
-
-- Ensure Firefox is installed
-- Verify geckodriver is downl (geckodriver auto-downloads)
-- Update Firefox to the latest version
-- If Firefox is in a non-standard location, set `FIREFOX_PATH` in `.env`
-- Check internet connection (needed to download geckodriver on first run)
-### Permission Errors
-
-- Run `setup_scheduler.bat` and `run_on_startup.bat` as Administrator if needed
-- Check that Python has permission to write to the Backend directory
-
-## Data Flow
-
-```
-MyLotto Scraper → lotto_results.csv → convert_to_json.py → results.json → Frontend
-```
-
-## License
+## 📄 License
 
 See repository root for license information.

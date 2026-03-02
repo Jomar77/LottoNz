@@ -1,0 +1,5 @@
+# pytest
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Add other test dependencies here

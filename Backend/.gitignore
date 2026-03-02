@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+.env.local
+*.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+scraper.log
+src/Scrapers/scraper.log
+
+# Runtime
+src/Scrapers/last_run.json
+task_schedule.xml
+
+# Test Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Data (if any gets added here)
+*.csv
+*.xlsx
+!.gitkeep
