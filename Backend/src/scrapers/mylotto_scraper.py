@@ -39,19 +39,20 @@ FIREFOX_PATH = os.getenv('FIREFOX_PATH', None)  # Optional: set if Firefox in no
 MYLOTTO_URL = os.getenv('MYLOTTO_URL', 'https://mylotto.co.nz/game-information')
 MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
 RETRY_DELAY = int(os.getenv('RETRY_DELAY', '60'))
-DOWNLOAD_TIMEOUT = 300  # 5 minutes max for download
-GIT_COMMIT_DELAY = int(os.getenv('GIT_COMMIT_DELAY', '300'))  # 5 minutes delay before commit
+DOWNLOAD_TIMEOUT = 60  # 1 minutes max for download
+GIT_COMMIT_DELAY = int(os.getenv('GIT_COMMIT_DELAY', '60'))  # 1 minute delay before commit
 ENABLE_AUTO_COMMIT = os.getenv('ENABLE_AUTO_COMMIT', 'true').lower() == 'true'
 
 # File paths
 SCRIPT_DIR = Path(__file__).parent
-BACKEND_DIR = SCRIPT_DIR.parent
+SRC_DIR = SCRIPT_DIR.parent
+BACKEND_DIR = SRC_DIR.parent
 REPO_DIR = BACKEND_DIR.parent
-DATA_DIR = BACKEND_DIR / 'lotto-data'
+DATA_DIR = SRC_DIR / 'lotto-data'
 EXCEL_FILE = DATA_DIR / 'december.xlsx'
 DOWNLOADS_DIR = Path.home() / 'Downloads'
-CONVERT_SCRIPT = BACKEND_DIR / 'convert_to_json.py'
-RESULTS_JSON = REPO_DIR / 'Frontend' / 'public' / 'results.json'
+CONVERT_SCRIPT = SRC_DIR / 'utils' / 'json_converter.py'
+RESULTS_JSON = REPO_DIR / 'frontend' / 'public' / 'results.json'
 
 
 class MyLottoScraper:
@@ -306,8 +307,8 @@ class MyLottoScraper:
             
             # Add the updated files
             files_to_add = [
-                'Backend/lotto-data/december.xlsx',
-                'Frontend/public/results.json'
+                'backend/src/lotto-data/december.xlsx',
+                'frontend/public/results.json'
             ]
             
             for file in files_to_add:
@@ -338,10 +339,17 @@ class MyLottoScraper:
             
             if result.returncode != 0:
                 # Check if it's just "nothing to commit"
-                if "nothing to commit" in result.stdout or "nothing to commit" in result.stderr:
+                stdout_l = (result.stdout or "").lower()
+                stderr_l = (result.stderr or "").lower()
+                if (
+                    "nothing to commit" in stdout_l
+                    or "nothing to commit" in stderr_l
+                    or "no changes added to commit" in stdout_l
+                    or "no changes added to commit" in stderr_l
+                ):
                     logger.info("Nothing to commit (files unchanged)")
                     return True
-                logger.error(f"Failed to commit: {result.stderr}")
+                logger.error(f"Failed to commit: {result.stderr or result.stdout}")
                 return False
             
             logger.info(f"Commit successful: {result.stdout}")

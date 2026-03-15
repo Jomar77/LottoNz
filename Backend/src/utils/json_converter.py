@@ -2,11 +2,49 @@ import pandas as pd
 import json
 from pathlib import Path
 
+
+def _find_excel_file() -> Path:
+    """Find december.xlsx across supported project layouts."""
+    here = Path(__file__).resolve()
+    src_dir = here.parent.parent
+    backend_dir = src_dir.parent
+    repo_dir = backend_dir.parent
+
+    candidates = [
+        src_dir / 'lotto-data' / 'december.xlsx',
+        backend_dir / 'lotto-data' / 'december.xlsx',
+        repo_dir / 'data' / 'raw' / 'december.xlsx',
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    candidate_list = "\n".join(f"- {p}" for p in candidates)
+    raise FileNotFoundError(
+        "Could not find december.xlsx in any known location. Checked:\n"
+        f"{candidate_list}"
+    )
+
+
+def _resolve_results_output() -> Path:
+    """Resolve frontend/public/results.json path with a fallback layout."""
+    here = Path(__file__).resolve()
+    repo_dir = here.parents[3]
+
+    primary = repo_dir / 'frontend' / 'public' / 'results.json'
+    fallback = repo_dir / 'Frontend' / 'public' / 'results.json'
+
+    if primary.parent.exists() or not fallback.parent.exists():
+        return primary
+    return fallback
+
+
 def excel_to_json():
     """Convert december.xlsx to results.json format for the React app"""
     
     # Read the Excel file
-    excel_path = Path(__file__).parent / 'lotto-data' / 'december.xlsx'
+    excel_path = _find_excel_file()
     df = pd.read_excel(excel_path, sheet_name='Lotto Powerball')
     
     # Convert to the required JSON structure
@@ -45,15 +83,18 @@ def excel_to_json():
     results.sort(key=lambda x: x['date'], reverse=True)
     
     # Write to JSON file
-    output_path = Path(__file__).parent.parent / 'Frontend' / 'public' / 'results.json'
+    output_path = _resolve_results_output()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     
     print(f"Successfully converted {len(results)} lottery results to {output_path}")
-    print(f"First result: {results[0]}")
-    print(f"Last result: {results[-1]}")
+    if results:
+        print(f"First result: {results[0]}")
+        print(f"Last result: {results[-1]}")
+    else:
+        print("No valid rows found in the spreadsheet.")
 
 if __name__ == '__main__':
     excel_to_json()
