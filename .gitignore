@@ -121,3 +121,8 @@ last_run.json
 .venv/
 venv/
 env/
+
+
+.claude/settings.json
+.claude/settings.local.json
+
