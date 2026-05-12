@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { fetchLotteryData } from './dataService';
-import { generateNumbers } from './utils';
+import { findHistoricalMatch, generateNumbers } from './utils';
 import { LotteryResult, GenerationPreferences, GeneratedNumbers } from './types';
 
 function App() {
@@ -9,6 +9,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatedNumbers, setGeneratedNumbers] = useState<GeneratedNumbers | null>(null);
+  const [manualNumbers, setManualNumbers] = useState('');
+  const [manualCheckMessage, setManualCheckMessage] = useState<string | null>(null);
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState<GenerationPreferences>({
     spread: 'wide',
@@ -37,6 +39,42 @@ function App() {
     if (data.length === 0) return;
     const numbers = generateNumbers(data, preferences);
     setGeneratedNumbers(numbers);
+  };
+
+  const handleManualCheck = () => {
+    if (data.length === 0) {
+      setManualCheckMessage('Historical data is still loading.');
+      return;
+    }
+
+    const parsedNumbers = manualNumbers
+      .split(/[\s,]+/)
+      .map(value => Number(value.trim()))
+      .filter(value => !Number.isNaN(value));
+
+    if (parsedNumbers.length !== 6) {
+      setManualCheckMessage('Enter exactly 6 numbers separated by commas or spaces.');
+      return;
+    }
+
+    if (new Set(parsedNumbers).size !== 6) {
+      setManualCheckMessage('Your selection has duplicate numbers. Please enter 6 unique numbers.');
+      return;
+    }
+
+    const outOfRange = parsedNumbers.find(num => num < 1 || num > 40);
+    if (outOfRange !== undefined) {
+      setManualCheckMessage('Numbers must be between 1 and 40.');
+      return;
+    }
+
+    const match = findHistoricalMatch(parsedNumbers, data);
+    if (match) {
+      setManualCheckMessage(`Exact duplicate found in the dataset on ${match.date}.`);
+      return;
+    }
+
+    setManualCheckMessage('No exact duplicate found in the historical dataset.');
   };
 
   const latestResult = data.length > 0 ? data[0] : null;
@@ -177,6 +215,40 @@ function App() {
             >
               {loading ? 'Loading Data...' : 'Generate Lucky Numbers'}
             </button>
+          </div>
+
+          {/* Manual History Check */}
+          <div className="px-6 pb-6">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Search className="w-5 h-5 text-highlight-blue" />
+                <h3 className="text-lg font-semibold text-gray-800">Check Your Own Numbers</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                Enter 6 main numbers to see whether the exact combination already exists in the dataset.
+              </p>
+              <div className="flex flex-col gap-3">
+                <input
+                  type="text"
+                  value={manualNumbers}
+                  onChange={(event) => setManualNumbers(event.target.value)}
+                  placeholder="Example: 3, 7, 12, 18, 24, 31"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder:text-gray-400 focus:border-highlight-blue focus:outline-none focus:ring-2 focus:ring-highlight-blue/20"
+                />
+                <button
+                  onClick={handleManualCheck}
+                  disabled={loading || data.length === 0}
+                  className="w-full rounded-lg bg-gray-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Check Against Dataset
+                </button>
+              </div>
+              {manualCheckMessage && (
+                <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                  {manualCheckMessage}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Error Message */}

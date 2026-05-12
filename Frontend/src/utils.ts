@@ -41,12 +41,26 @@ export function hasConsecutive(numbers: number[]): boolean {
   return false;
 }
 
+export function findHistoricalMatch(numbers: number[], historicalData: LotteryResult[]): LotteryResult | null {
+  if (numbers.length !== 6 || new Set(numbers).size !== 6) {
+    return null;
+  }
+
+  const selectedNumbers = new Set(numbers);
+
+  return (
+    historicalData.find(result => {
+      if (result.numbers.length !== 6 || new Set(result.numbers).size !== 6) {
+        return false;
+      }
+
+      return result.numbers.every(num => selectedNumbers.has(num));
+    }) ?? null
+  );
+}
+
 export function isUnique(numbers: number[], historicalData: LotteryResult[]): boolean {
-  const numSet = new Set(numbers);
-  return !historicalData.some(result => {
-    const intersection = result.numbers.filter(n => numSet.has(n));
-    return intersection.length === 6;
-  });
+  return findHistoricalMatch(numbers, historicalData) === null;
 }
 
 /**
