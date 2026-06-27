@@ -90,7 +90,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `generate_regression_set(df, z_threshold=-2.0) -> list[int]` with the documented fallback so it always yields up to 6.
   - Acceptance: coldest-first ordering verified; never returns a short list without the fallback.
 
-- [ ] **B8. Strategy 3 — Momentum Carry-Over set**
+- [x] **B8. Strategy 3 — Momentum Carry-Over set**
   - Tests first: `test_momentum_returns_hot_in_window` (numbers recurring ≥`min_freq` in last `window` draws → selected, freq-desc), `test_momentum_window_only` (numbers hot only outside the window excluded).
   - Implement: `generate_momentum_set(df, window=30, min_freq=8) -> list[int]` using `df.tail(window)`, with a documented top-up fallback when fewer than 6 clear `min_freq`.
   - Acceptance: window-scoped hot selection verified; freq-descending order.

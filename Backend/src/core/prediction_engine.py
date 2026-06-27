@@ -217,3 +217,23 @@ def generate_regression_set(df: pd.DataFrame, z_threshold: float = -2.0) -> list
     if len(cold) >= 6:
         return cold[:6]
     return by_z_asc[:6]
+
+
+# ---------------------------------------------------------------------------
+# B8 — Strategy 3: Momentum Carry-Over set
+# ---------------------------------------------------------------------------
+def generate_momentum_set(df: pd.DataFrame, window: int = 30, min_freq: int = 8) -> list[int]:
+    """Hot numbers recurring within the recent ``window`` draws, freq-descending.
+
+    Numbers appearing >= ``min_freq`` times in the window are returned highest-
+    frequency-first. If fewer than 6 clear ``min_freq``, top up with the next
+    most frequent numbers in the window (documented fallback).
+    """
+    recent = df.tail(window)
+    freqs = calculate_frequencies(recent)
+    by_freq_desc = sorted(freqs, key=lambda n: (-freqs[n], n))
+
+    hot = [n for n in by_freq_desc if freqs[n] >= min_freq]
+    if len(hot) >= 6:
+        return hot[:6]
+    return by_freq_desc[:6]

@@ -239,3 +239,35 @@ def test_regression_threshold_relaxes_when_empty():
     result = pe.generate_regression_set(df)
     assert len(result) == 6
     assert len(set(result)) == 6
+
+
+# --- B8: momentum carry-over set ------------------------------------------
+
+def _build_momentum_fixture():
+    """Old draws use 35-40 (outside last-30 window); recent draws use 1-7."""
+    draws = []
+
+    def add(date, nums, count):
+        for _ in range(count):
+            draws.append({"date": date, "numbers": list(nums), "powerball": 1})
+
+    add("2024-01-01", [35, 36, 37, 38, 39, 40], 30)  # oldest -> outside window
+    add("2025-01-01", [1, 2, 3, 4, 5, 6], 15)
+    add("2025-06-01", [1, 2, 3, 4, 5, 7], 15)  # newest
+    return draws
+
+
+def test_momentum_returns_hot_in_window():
+    df = pe.to_dataframe(_build_momentum_fixture())
+    result = pe.generate_momentum_set(df, window=30, min_freq=8)
+    assert len(result) == 6
+    assert 1 in result  # appears 30x in window
+    recent_freqs = pe.calculate_frequencies(df.tail(30))
+    ordered = [recent_freqs[n] for n in result]
+    assert ordered == sorted(ordered, reverse=True)  # freq-descending
+
+
+def test_momentum_window_only():
+    df = pe.to_dataframe(_build_momentum_fixture())
+    result = pe.generate_momentum_set(df, window=30, min_freq=8)
+    assert 40 not in result  # hot only outside the window
