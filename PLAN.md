@@ -85,7 +85,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `generate_burst_set(df, top_n=6) -> list[int]` using quarterly freqs + CV, then `get_recent_numbers(df, last_n_draws=30)` filter. Add helper `get_recent_numbers(df, last_n_draws) -> set[int]`.
   - Acceptance: valid candidate list; recency+CV preference verified.
 
-- [ ] **B7. Strategy 2 — Regression (Sleeping Giants) set**
+- [x] **B7. Strategy 2 — Regression (Sleeping Giants) set**
   - Tests first: `test_regression_returns_coldest` (under-represented numbers appear, coldest-first), `test_regression_threshold_relaxes_when_empty` (if no z < −2.0, return the 6 lowest-z numbers rather than <6).
   - Implement: `generate_regression_set(df, z_threshold=-2.0) -> list[int]` with the documented fallback so it always yields up to 6.
   - Acceptance: coldest-first ordering verified; never returns a short list without the fallback.

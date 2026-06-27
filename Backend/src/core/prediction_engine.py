@@ -193,3 +193,27 @@ def generate_burst_set(df: pd.DataFrame, top_n: int = 6, recent_window: int = 30
     candidates = sorted(cv_scores.items(), key=lambda kv: kv[1], reverse=True)[: top_n * 2]
     recent = get_recent_numbers(df, recent_window)
     return [num for num, _ in candidates if num in recent][:top_n]
+
+
+# ---------------------------------------------------------------------------
+# B7 — Strategy 2: Regression (Sleeping Giants) set
+# ---------------------------------------------------------------------------
+def generate_regression_set(df: pd.DataFrame, z_threshold: float = -2.0) -> list[int]:
+    """Coldest numbers (most below mean frequency), coldest-first.
+
+    Numbers with z < ``z_threshold`` are returned coldest-first. If fewer than 6
+    clear the threshold, fall back to the 6 lowest-z numbers (documented fallback
+    so the set is never short).
+    """
+    freqs = calculate_frequencies(df)
+    values = list(freqs.values())
+    mean_freq = float(np.mean(values))
+    std_freq = float(np.std(values))
+
+    z_by_num = {num: calculate_z_score(freq, mean_freq, std_freq) for num, freq in freqs.items()}
+    by_z_asc = sorted(z_by_num, key=lambda n: z_by_num[n])  # coldest first
+
+    cold = [n for n in by_z_asc if z_by_num[n] < z_threshold]
+    if len(cold) >= 6:
+        return cold[:6]
+    return by_z_asc[:6]

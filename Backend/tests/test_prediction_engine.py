@@ -195,3 +195,47 @@ def test_burst_prefers_high_cv_recent():
     result = pe.generate_burst_set(df)
     assert 10 in result  # high CV and recent
     assert 20 not in result  # high CV but not recent
+
+
+# --- B7: regression (sleeping giants) set ----------------------------------
+
+def _build_regression_fixture():
+    """Most numbers drawn often; 38/39/40 progressively colder (40 coldest)."""
+    draws = []
+
+    def add(nums):
+        draws.append({"date": "2025-01-01", "numbers": list(nums), "powerball": 1})
+
+    # 1..37 each appear ~10 times via rotating 6-number draws.
+    hot = list(range(1, 38))
+    for _ in range(10):
+        for i in range(0, len(hot) - 5, 6):
+            add(hot[i : i + 6])
+    # leftover of 1..37 to even things; then cold tail:
+    add([38, 38 - 1, 38 - 2, 38 - 3, 38 - 4, 38 - 5])  # one extra draw with 38 (cold but not coldest)
+    add([39 - 1, 39 - 2, 39 - 3, 39 - 4, 39 - 5, 38])  # 38 appears twice total, 39 zero so far
+    add([1, 2, 3, 4, 5, 39])  # 39 appears once
+    return draws
+
+
+def test_regression_returns_coldest():
+    df = pe.to_dataframe(_build_regression_fixture())
+    result = pe.generate_regression_set(df)
+    freqs = pe.calculate_frequencies(df)
+    # coldest-first: frequencies non-decreasing along the returned set
+    result_freqs = [freqs[n] for n in result]
+    assert result_freqs == sorted(result_freqs)
+    assert result[0] == 40  # 40 is never drawn -> coldest
+    assert len(result) == 6
+
+
+def test_regression_threshold_relaxes_when_empty():
+    # Perfectly flat distribution -> no z < -2.0 -> fallback to 6 lowest-z.
+    draws = [
+        {"date": "2025-01-01", "numbers": list(g), "powerball": 1}
+        for g in ([1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12])
+    ]
+    df = pe.to_dataframe(draws)
+    result = pe.generate_regression_set(df)
+    assert len(result) == 6
+    assert len(set(result)) == 6
