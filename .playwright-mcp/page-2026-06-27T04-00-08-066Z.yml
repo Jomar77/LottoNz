@@ -1,0 +1,312 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - status [ref=e5]: The Official Lotto NZ website
+    - link "Skip to content" [ref=e6] [cursor=pointer]:
+      - /url: "#content"
+    - link "Skip to games list" [ref=e7] [cursor=pointer]:
+      - /url: "#navLottosecondary"
+    - link "Skip to login menu" [ref=e8] [cursor=pointer]:
+      - /url: "#login"
+    - link "Skip to content" [ref=e9] [cursor=pointer]:
+      - /url: "#content"
+    - generic:
+      - generic [ref=e10]:
+        - button "Jump to menu" [ref=e11]
+        - list [ref=e14]:
+          - listitem [ref=e15]:
+            - link "How to play" [ref=e16] [cursor=pointer]:
+              - /url: /how-to-play
+          - listitem [ref=e17]:
+            - link "Where to play" [ref=e18] [cursor=pointer]:
+              - /url: /where-to-play
+          - listitem [ref=e19]:
+            - link "Subscribe" [ref=e20] [cursor=pointer]:
+              - /url: /lotto/subscriptions
+          - listitem [ref=e21]:
+            - link "Winning" [ref=e22] [cursor=pointer]:
+              - /url: /winning
+          - listitem [ref=e23]:
+            - link "Community" [ref=e24] [cursor=pointer]:
+              - /url: /community-funding
+          - listitem [ref=e25]:
+            - link "Play Smart" [ref=e26] [cursor=pointer]:
+              - /url: /playsmart
+        - button "Close menu" [ref=e27]:
+          - generic [ref=e28]: Close menu
+        - button "Close menu":
+          - generic [ref=e29]: Close menu
+      - generic [ref=e30]:
+        - button "Skip to content" [ref=e31]
+        - list [ref=e32]:
+          - listitem [ref=e33]:
+            - heading "Kia Ora," [level=2] [ref=e34]
+          - listitem [ref=e35]:
+            - generic [ref=e37]:
+              - generic "info," [ref=e38]:
+                - img [ref=e39]
+              - generic [ref=e42]:
+                - text: To play online please finish
+                - link "setting up your account." [ref=e43] [cursor=pointer]:
+                  - /url: /registration-setup
+          - listitem [ref=e44]:
+            - link "Settings" [ref=e45] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e47]
+              - text: Settings
+          - listitem [ref=e49]:
+            - link "My tickets" [ref=e50] [cursor=pointer]:
+              - /url: /my-tickets
+              - img [ref=e52]
+              - text: My tickets
+          - listitem [ref=e54]:
+            - button "Messages" [ref=e55]:
+              - img [ref=e57]
+              - text: Messages
+          - listitem [ref=e59]:
+            - link "Favourites" [ref=e60] [cursor=pointer]:
+              - /url: /my-tickets/favourites
+              - img [ref=e62]
+              - text: Favourites
+          - listitem [ref=e66]:
+            - link "Subscriptions" [ref=e67] [cursor=pointer]:
+              - /url: /my-tickets/subscriptions
+              - img [ref=e69]
+              - text: Subscriptions
+          - listitem [ref=e73]:
+            - link "Log out" [ref=e74] [cursor=pointer]:
+              - /url: /
+              - img [ref=e76]
+              - text: Log out
+        - button "Close menu" [ref=e81]:
+          - generic [ref=e82]: Close menu
+        - button "Close menu" [ref=e83]:
+          - generic [ref=e84]: Close menu
+    - generic [ref=e85]:
+      - button "Focus on skip links" [ref=e86]
+      - generic [ref=e87]:
+        - list [ref=e88]:
+          - listitem [ref=e89]:
+            - button "Menu" [ref=e90]:
+              - img [ref=e92]
+              - generic [ref=e97]: Menu
+          - listitem [ref=e98]:
+            - link "Results" [ref=e99] [cursor=pointer]:
+              - /url: /results
+              - img [ref=e101]
+              - generic [ref=e105]: Results
+        - link "Home" [ref=e106] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e107]: Home
+        - list [ref=e108]:
+          - listitem [ref=e109]:
+            - link "Sign Up" [ref=e110] [cursor=pointer]:
+              - /url: /registration
+              - img [ref=e112]
+              - generic [ref=e115]: Sign Up
+          - listitem [ref=e116]:
+            - button "Log in" [ref=e117]:
+              - img [ref=e119]
+              - generic [ref=e124]: Log in
+    - list [ref=e127]:
+      - listitem [ref=e128]:
+        - link "Lotto Powerball Strike" [ref=e129] [cursor=pointer]:
+          - /url: /lotto
+          - generic [ref=e132]: Lotto Powerball Strike
+      - listitem [ref=e133]:
+        - link "Keno" [ref=e134] [cursor=pointer]:
+          - /url: /keno
+          - generic [ref=e136]: Keno
+      - listitem [ref=e137]:
+        - link "Bullseye" [ref=e138] [cursor=pointer]:
+          - /url: /bullseye
+          - generic [ref=e140]: Bullseye
+      - listitem [ref=e141]:
+        - link "Instant Kiwi" [ref=e142] [cursor=pointer]:
+          - /url: /instant-kiwi
+          - generic [ref=e144]: Instant Kiwi
+  - generic [ref=e145]:
+    - generic [ref=e146]:
+      - heading "Game information" [level=1] [ref=e150]
+      - generic [ref=e153]:
+        - generic [ref=e155]:
+          - heading "Number frequency tables (all games)" [level=2] [ref=e156]
+          - generic [ref=e157]:
+            - link "Number frequency tables (all games 11-05-2026) (XLSX)" [ref=e158] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/30155326-4cf2-11f1-8975-461517176844.xlsx
+            - paragraph [ref=e159]: 0.04 MB
+        - generic [ref=e161]:
+          - heading "Draw results (all games)" [level=2] [ref=e162]
+          - generic [ref=e163]:
+            - link "Draw results (all games 11-05-2026) (XLSX)" [ref=e164] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/4683f9d2-4cf2-11f1-b09c-461517176844.xlsx
+            - paragraph [ref=e165]: 3.66 MB
+      - generic [ref=e168]:
+        - generic [ref=e170]:
+          - heading "Game odds" [level=2] [ref=e171]
+          - generic [ref=e172]:
+            - link "All games odds (PDF)" [ref=e173] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/651dc948-aad9-11ef-8de3-005056817096.pdf
+            - paragraph [ref=e174]: 0.64 MB
+        - generic [ref=e176]:
+          - heading "Game rules" [level=2] [ref=e177]
+          - generic [ref=e178]:
+            - link "Lotto (PDF)" [ref=e179] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/485a1f58-9833-11f0-a22c-3ad4acd14bcf.pdf
+            - paragraph [ref=e180]: 0.44 MB
+          - generic [ref=e181]:
+            - link "Keno (PDF)" [ref=e182] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/327dfbb4-9833-11f0-97a7-3ad4acd14bcf.pdf
+            - paragraph [ref=e183]: 0.41 MB
+          - generic [ref=e184]:
+            - link "Bullseye (PDF)" [ref=e185] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/fdb82c6c-2c6e-11f1-8f1c-72e578d39883.pdf
+            - paragraph [ref=e186]: 0.50 MB
+          - generic [ref=e187]:
+            - link "Instant Kiwi In-store games (PDF)" [ref=e188] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/0cfa09b8-8738-11ee-ba57-005056af723d.pdf
+            - paragraph [ref=e189]: 0.30 MB
+          - generic [ref=e190]:
+            - link "Instant Kiwi Online games (PDF)" [ref=e191] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/4c897866-8738-11ee-89df-005056af723d.pdf
+            - paragraph [ref=e192]: 0.37 MB
+          - generic [ref=e193]:
+            - 'link "Gambling Act 2003: Provisions relating to Instant Kiwi (PDF)" [ref=e194] [cursor=pointer]':
+              - /url: https://assets.mylotto.co.nz/assets/uploads/0dc88180-8738-11ee-aa91-005056af723d.pdf
+            - paragraph [ref=e195]: 0.01 MB
+          - generic [ref=e196]:
+            - link "Instant Kiwi Online game withdrawal standard (PDF)" [ref=e197] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/4d92bf8c-b01e-11ef-930d-005056817096.pdf
+            - paragraph [ref=e198]: 0.24 MB
+          - generic [ref=e199]:
+            - link "Instant Kiwi In Store game withdrawal standard (PDF)" [ref=e200] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/e4f8e232-2c6c-11f0-a36a-0e63011a1655.pdf
+            - paragraph [ref=e201]: 0.50 MB
+        - generic [ref=e203]:
+          - heading "Jackpot standards" [level=2] [ref=e204]
+          - generic [ref=e205]:
+            - link "Powerball 2025 (PDF)" [ref=e206] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/37fe835c-a561-11f0-8757-3ad4acd14bcf.pdf
+            - paragraph [ref=e207]: 0.26 MB
+          - generic [ref=e208]:
+            - link "Strike 2025 (PDF)" [ref=e209] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/53d5240a-a561-11f0-b46f-3ad4acd14bcf.pdf
+            - paragraph [ref=e210]: 0.26 MB
+          - generic [ref=e211]:
+            - link "Bullseye 2025 (PDF)" [ref=e212] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/d2ac44e0-103b-11f0-bf0e-da028ecb8db8.pdf
+            - paragraph [ref=e213]: 0.23 MB
+        - generic [ref=e215]:
+          - heading "Game designs" [level=2] [ref=e216]
+          - generic [ref=e217]:
+            - link "Keno (PDF)" [ref=e218] [cursor=pointer]:
+              - /url: https://assets.mylotto.co.nz/assets/uploads/5e779b5e-bf65-11f0-a522-3ad4acd14bcf.pdf
+            - paragraph [ref=e219]: 0.15 MB
+    - generic [ref=e233]:
+      - generic [ref=e234]:
+        - heading "Contact us" [level=1] [ref=e235]:
+          - link "Contact us" [ref=e236] [cursor=pointer]:
+            - /url: /contact-us
+        - paragraph [ref=e237]:
+          - link "0800 695 6886" [ref=e238] [cursor=pointer]:
+            - /url: tel:0800 695 6886
+        - paragraph [ref=e239]:
+          - link "customersupport@mylotto.co.nz" [ref=e240] [cursor=pointer]:
+            - /url: mailto:customersupport@mylotto.co.nz
+        - heading "Connect with us" [level=2] [ref=e241]
+        - list [ref=e242]:
+          - listitem [ref=e243]:
+            - link "Lotto (opens in new window)" [ref=e244] [cursor=pointer]:
+              - /url: https://www.facebook.com/LottoNZ/
+              - img [ref=e246]
+              - text: Lotto
+              - generic [ref=e248]: (opens in new window)
+          - listitem [ref=e249]:
+            - link "Instant Kiwi (opens in new window)" [ref=e250] [cursor=pointer]:
+              - /url: https://www.facebook.com/InstantKiwi/
+              - img [ref=e252]
+              - text: Instant Kiwi
+              - generic [ref=e254]: (opens in new window)
+          - listitem
+          - listitem [ref=e255]:
+            - link "Lotto NZ (opens in new window)" [ref=e256] [cursor=pointer]:
+              - /url: https://twitter.com/lotto_nz
+              - img [ref=e258]
+              - text: Lotto NZ
+              - generic [ref=e260]: (opens in new window)
+          - listitem [ref=e261]:
+            - link "Lotto New Zealand (opens in new window)" [ref=e262] [cursor=pointer]:
+              - /url: " https://www.instagram.com/lotto_nz"
+              - img [ref=e264]
+              - text: Lotto New Zealand
+              - generic [ref=e267]: (opens in new window)
+          - listitem
+          - listitem [ref=e268]:
+            - button "shielded" [ref=e269]:
+              - img "shielded" [ref=e270]
+        - list [ref=e271]:
+          - listitem [ref=e272]:
+            - link "Download on the App Store (opens in new window)" [ref=e273] [cursor=pointer]:
+              - /url: https://itunes.apple.com/nz/app/official-lotto-nz/id842963152?mt=8
+              - img [ref=e274]
+              - generic [ref=e300]: Download on the App Store (opens in new window)
+          - listitem [ref=e301]:
+            - link "Download on the Play Store (opens in new window)" [ref=e302] [cursor=pointer]:
+              - /url: https://play.google.com/store/apps/details?id=nz.co.mylotto&utm_source=mylotto&utm_campaign=footer_playstore_badge&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1
+              - img [ref=e303]
+              - generic [ref=e311]: Download on the Play Store (opens in new window)
+      - generic [ref=e313]:
+        - generic [ref=e314]:
+          - heading "Lotto NZ" [level=1] [ref=e315]
+          - list [ref=e316]:
+            - listitem [ref=e317]:
+              - link "About us" [ref=e318] [cursor=pointer]:
+                - /url: /about-us
+            - listitem [ref=e319]:
+              - link "Corporate publications" [ref=e320] [cursor=pointer]:
+                - /url: /about-us/reports-and-statements
+            - listitem [ref=e321]:
+              - link "Press releases" [ref=e322] [cursor=pointer]:
+                - /url: /news-and-press-releases
+            - listitem [ref=e323]:
+              - link "Careers" [ref=e324] [cursor=pointer]:
+                - /url: /careers
+            - listitem [ref=e325]:
+              - link "Become a retailer" [ref=e326] [cursor=pointer]:
+                - /url: /about-us/about-our-retail-network
+            - listitem [ref=e327]:
+              - link "Lottery grants funding" [ref=e328] [cursor=pointer]:
+                - /url: /lottery-grants
+        - generic [ref=e329]:
+          - heading "About our games" [level=1] [ref=e330]
+          - list [ref=e331]:
+            - listitem [ref=e332]:
+              - link "FAQs" [ref=e333] [cursor=pointer]:
+                - /url: /faqs
+            - listitem [ref=e334]:
+              - link "Rules, odds and information" [ref=e335] [cursor=pointer]:
+                - /url: /game-information
+            - listitem [ref=e336]:
+              - link "Legal and privacy policies" [ref=e337] [cursor=pointer]:
+                - /url: /legal-and-privacy-policies
+            - listitem [ref=e338]:
+              - link "Promotion terms and conditions" [ref=e339] [cursor=pointer]:
+                - /url: /legal-and-privacy-policies/promotion-terms-and-conditions
+            - listitem [ref=e340]:
+              - link "Play Smart" [ref=e341] [cursor=pointer]:
+                - /url: /playsmart
+            - listitem [ref=e342]:
+              - link "Site accessibility" [ref=e343] [cursor=pointer]:
+                - /url: /accessibility
+      - list [ref=e345]:
+        - listitem [ref=e346]:
+          - link "Play a little Dream a lot Play Smart (opens in new window)" [ref=e347] [cursor=pointer]:
+            - /url: /playsmart
+            - img "Play a little Dream a lot" [ref=e348]
+            - generic [ref=e349]: Play Smart (opens in new window)
+        - listitem [ref=e350]:
+          - link "World Lottery Association (opens in new window)" [ref=e351] [cursor=pointer]:
+            - /url: https://www.world-lotteries.org/
+            - img [ref=e352]
+            - generic [ref=e402]: World Lottery Association (opens in new window)
+        - listitem [ref=e403]: Copyright © 2026 Lotto NZ
+  - img [ref=e405] [cursor=pointer]

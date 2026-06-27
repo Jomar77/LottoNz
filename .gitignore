@@ -8,6 +8,7 @@
 *.pem
 secrets.json
 config/secrets.json
+.mcp.json
 *.secret
 credentials.json
 auth.json

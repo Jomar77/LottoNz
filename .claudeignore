@@ -1,0 +1,23 @@
+# Secrets — Claude must never read these
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+**/.env
+**/.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
+.aws/
+.ssh/
+secrets/
+
+# Noise — exclude to save context tokens
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.log

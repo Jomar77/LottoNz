@@ -6,7 +6,7 @@ Manages scheduling logic, tracks last run, and determines if scraping is needed
 import json
 import sys
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
@@ -110,21 +110,11 @@ class SchedulerManager:
             
             logger.info(f"Last successful run: {last_run_str} ({days_since_run} days ago)")
             
-            # Should run if more than 7 days have passed
-            if days_since_run >= 7:
-                logger.info(f"More than 7 days since last run. Should run scraper.")
+            # Should run if more than 30 days have passed
+            if days_since_run >= 30:
+                logger.info(f"More than 30 days since last run. Should run scraper.")
                 return True
-            
-            # Check if it's Sunday after 5 PM and we haven't run this week
-            if now.weekday() == 6 and now.hour >= 17:  # Sunday = 6
-                # Check if last run was before this Sunday
-                days_until_sunday = (6 - last_run.weekday()) % 7
-                next_sunday_after_last_run = last_run + timedelta(days=days_until_sunday)
-                
-                if now.date() >= next_sunday_after_last_run.date():
-                    logger.info("It's Sunday after 5 PM and we haven't run this week. Should run scraper.")
-                    return True
-            
+
             logger.info("Scraper already ran recently. Skipping.")
             return False
             
