@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
-import { Search, Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { fetchLotteryData } from './dataService';
 import { findHistoricalMatch, generateNumbers } from './utils';
 import { LotteryResult, GenerationPreferences, GeneratedNumbers } from './types';
+
+const ITEM_H = 48; // picker item height in px
+const VISIBLE = 5;  // visible rows in picker drum
 
 function App() {
   const [data, setData] = useState<LotteryResult[]>([]);
@@ -12,6 +15,8 @@ function App() {
   const [bulkCount, setBulkCount] = useState(1);
   const [bulkInputStr, setBulkInputStr] = useState('1');
   const [countBounce, setCountBounce] = useState(false);
+  const [showPickerModal, setShowPickerModal] = useState(false);
+  const [tempCount, setTempCount] = useState(1);
   const [manualNumbers, setManualNumbers] = useState('');
   const [manualCheckMessage, setManualCheckMessage] = useState<string | null>(null);
   const [showPreferences, setShowPreferences] = useState(false);
@@ -22,6 +27,7 @@ function App() {
   });
 
   const scrollZoneRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -40,6 +46,14 @@ function App() {
     loadData();
   }, []);
 
+  // Scroll picker to saved position each time modal opens
+  useEffect(() => {
+    if (showPickerModal && pickerRef.current) {
+      pickerRef.current.scrollTop = (tempCount - 1) * ITEM_H;
+    }
+  }, [showPickerModal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Desktop: mouse-wheel on the scroll zone
   const adjustCount = useCallback((delta: number) => {
     setBulkCount(prev => {
       const next = Math.max(1, Math.min(50, prev + delta));
@@ -65,9 +79,7 @@ function App() {
     const raw = e.target.value.replace(/\D/g, '');
     setBulkInputStr(raw);
     const n = parseInt(raw, 10);
-    if (!isNaN(n) && n >= 1 && n <= 50) {
-      setBulkCount(n);
-    }
+    if (!isNaN(n) && n >= 1 && n <= 50) setBulkCount(n);
   };
 
   const handleCountBlur = () => {
@@ -75,6 +87,25 @@ function App() {
     const clamped = isNaN(n) || n < 1 ? 1 : Math.min(50, n);
     setBulkCount(clamped);
     setBulkInputStr(String(clamped));
+  };
+
+  // Mobile iOS picker
+  const openPicker = () => {
+    setTempCount(bulkCount);
+    setShowPickerModal(true);
+  };
+
+  const handlePickerScroll = () => {
+    const el = pickerRef.current;
+    if (!el) return;
+    const index = Math.round(el.scrollTop / ITEM_H);
+    setTempCount(Math.max(1, Math.min(50, index + 1)));
+  };
+
+  const confirmPicker = () => {
+    setBulkCount(tempCount);
+    setBulkInputStr(String(tempCount));
+    setShowPickerModal(false);
   };
 
   const handleGenerate = () => {
@@ -103,28 +134,25 @@ function App() {
       setManualCheckMessage('Enter exactly 6 numbers separated by commas or spaces.');
       return;
     }
-
     if (new Set(parsedNumbers).size !== 6) {
       setManualCheckMessage('Your selection has duplicate numbers. Please enter 6 unique numbers.');
       return;
     }
-
     const outOfRange = parsedNumbers.find(num => num < 1 || num > 40);
     if (outOfRange !== undefined) {
       setManualCheckMessage('Numbers must be between 1 and 40.');
       return;
     }
-
     const match = findHistoricalMatch(parsedNumbers, data);
     if (match) {
       setManualCheckMessage(`Exact duplicate found in the dataset on ${match.date}.`);
       return;
     }
-
     setManualCheckMessage('No exact duplicate found in the historical dataset.');
   };
 
   const latestResult = data.length > 0 ? data[0] : null;
+  const drumPadding = Math.floor(VISIBLE / 2) * ITEM_H; // 96px — centers first/last item
 
   return (
     <div className="min-h-screen py-8 px-4">
@@ -304,8 +332,30 @@ function App() {
                 </div>
               </div>
 
-              {/* Ticket count scroll control */}
-              <div className="p-6 border-b border-gray-100">
+              {/* ── Mobile counter: big number + Edit button ── */}
+              <div className="lg:hidden p-6 border-b border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">
+                  Number of Tickets
+                </p>
+                <div className="flex items-center justify-center gap-4">
+                  <span
+                    className="text-6xl font-bold text-gray-800"
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {bulkCount}
+                  </span>
+                  <button
+                    onClick={openPicker}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-highlight-blue/10 text-highlight-blue text-sm font-semibold hover:bg-highlight-blue/20 active:scale-95 transition-all"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Desktop counter: ± buttons + mouse-wheel input ── */}
+              <div className="hidden lg:block p-6 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">
                   Number of Tickets
                 </p>
@@ -322,9 +372,7 @@ function App() {
                     −
                   </button>
 
-                  <div
-                    className={`transition-transform duration-150 ease-out ${countBounce ? 'scale-125' : 'scale-100'}`}
-                  >
+                  <div className={`transition-transform duration-150 ease-out ${countBounce ? 'scale-125' : 'scale-100'}`}>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -361,7 +409,7 @@ function App() {
                 </button>
               </div>
 
-              {/* Generated tickets list */}
+              {/* Generated tickets */}
               {generatedList.length > 0 && (
                 <>
                   <div className="px-5 py-3 bg-gray-50">
@@ -369,7 +417,9 @@ function App() {
                       {generatedList.length > 1 ? `${generatedList.length} Tickets` : 'Your Lucky Numbers'}
                     </p>
                   </div>
-                  <div className="divide-y divide-gray-100 overflow-y-auto max-h-[52vh]">
+
+                  {/* Desktop: compact scrollable list */}
+                  <div className="hidden lg:block divide-y divide-gray-100 overflow-y-auto max-h-[52vh]">
                     {generatedList.map((ticket, ticketIdx) => (
                       <div key={ticketIdx} className="px-4 py-3">
                         {generatedList.length > 1 && (
@@ -405,6 +455,47 @@ function App() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Mobile: full-width cards with large balls */}
+                  <div className="lg:hidden p-4 space-y-4">
+                    {generatedList.map((ticket, ticketIdx) => (
+                      <div
+                        key={ticketIdx}
+                        className="bg-gradient-to-br from-base/10 to-highlight-blue/10 rounded-xl p-4 border-2 border-base/20"
+                      >
+                        {generatedList.length > 1 && (
+                          <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
+                            Ticket {ticketIdx + 1}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-center gap-3 flex-wrap">
+                          {ticket.numbers.map((num, idx) => (
+                            <div
+                              key={idx}
+                              className="w-14 h-14 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-xl font-bold shadow-lg animate-bounce"
+                              style={{
+                                animationDelay: `${(ticketIdx * 7 + idx) * 60}ms`,
+                                animationDuration: '1s',
+                                animationIterationCount: '1'
+                              }}
+                            >
+                              {num}
+                            </div>
+                          ))}
+                          <div
+                            className="w-14 h-14 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white animate-bounce"
+                            style={{
+                              animationDelay: `${(ticketIdx * 7 + 6) * 60}ms`,
+                              animationDuration: '1s',
+                              animationIterationCount: '1'
+                            }}
+                          >
+                            {ticket.powerball}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -416,6 +507,95 @@ function App() {
           <p>Based on {data.length} historical draws</p>
         </div>
       </div>
+
+      {/* ── iOS-style picker modal (mobile only) ── */}
+      {showPickerModal && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowPickerModal(false)}
+          />
+
+          {/* Bottom sheet */}
+          <div className="relative w-full bg-white rounded-t-3xl shadow-2xl">
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-300" />
+            </div>
+
+            {/* Header row */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <button
+                onClick={() => setShowPickerModal(false)}
+                className="text-gray-500 font-medium text-sm px-1 py-1"
+              >
+                Cancel
+              </button>
+              <h3 className="font-semibold text-gray-800 text-base">Number of Tickets</h3>
+              <button
+                onClick={confirmPicker}
+                className="text-highlight-blue font-semibold text-sm px-1 py-1"
+              >
+                Done
+              </button>
+            </div>
+
+            {/* Drum picker */}
+            <div
+              className="relative overflow-hidden"
+              style={{ height: ITEM_H * VISIBLE }}
+            >
+              {/* Center selection bar */}
+              <div
+                className="absolute inset-x-8 bg-gray-100 rounded-xl pointer-events-none z-10"
+                style={{ top: drumPadding, height: ITEM_H }}
+              />
+
+              {/* Scrollable number list */}
+              <div
+                ref={pickerRef}
+                onScroll={handlePickerScroll}
+                className="picker-scroll h-full overflow-y-scroll snap-y snap-mandatory"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  paddingTop: drumPadding,
+                  paddingBottom: drumPadding,
+                }}
+              >
+                {Array.from({ length: 50 }, (_, i) => i + 1).map(n => (
+                  <div
+                    key={n}
+                    className={`snap-center flex items-center justify-center font-semibold transition-all duration-100 select-none ${
+                      n === tempCount
+                        ? 'text-gray-900 text-3xl'
+                        : 'text-gray-400 text-xl'
+                    }`}
+                    style={{ height: ITEM_H }}
+                  >
+                    {n}
+                  </div>
+                ))}
+              </div>
+
+              {/* Top fade */}
+              <div
+                className="absolute inset-x-0 top-0 pointer-events-none z-20 bg-gradient-to-b from-white via-white/70 to-transparent"
+                style={{ height: drumPadding }}
+              />
+              {/* Bottom fade */}
+              <div
+                className="absolute inset-x-0 bottom-0 pointer-events-none z-20 bg-gradient-to-t from-white via-white/70 to-transparent"
+                style={{ height: drumPadding }}
+              />
+            </div>
+
+            {/* Safe-area spacer */}
+            <div className="h-8" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
