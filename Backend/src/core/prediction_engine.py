@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 # ---------------------------------------------------------------------------
@@ -100,3 +101,24 @@ def calculate_quarterly_frequencies(df: pd.DataFrame) -> dict[int, list[int]]:
 
 def calculate_yearly_frequencies(df: pd.DataFrame) -> dict[int, list[int]]:
     return _bucketed_frequencies(_as_dataframe(df), "Y")
+
+
+# ---------------------------------------------------------------------------
+# B3 — Scalar stats: CV and z-score (with zero-denominator guards)
+# ---------------------------------------------------------------------------
+def calculate_cv(values) -> float:
+    """Coefficient of variation (population std / mean). Returns 0.0 if mean==0."""
+    if len(values) == 0:
+        return 0.0
+    arr = np.asarray(values, dtype=float)
+    mean = arr.mean()
+    if mean == 0:
+        return 0.0
+    return float(arr.std() / mean)
+
+
+def calculate_z_score(current_freq: float, mean_freq: float, std_freq: float) -> float:
+    """Standard score. Returns 0.0 if std_freq==0 (guard not in new-algo.md)."""
+    if std_freq == 0:
+        return 0.0
+    return float((current_freq - mean_freq) / std_freq)

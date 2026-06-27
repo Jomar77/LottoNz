@@ -65,7 +65,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `calculate_frequencies(draws_or_df) -> dict[int,int]`; `calculate_quarterly_frequencies(df) -> dict[int, list[int]]` via `df.date.dt.to_period("Q")`; `calculate_yearly_frequencies(df) -> dict[int, list[int]]`. All 40 numbers always present (zero-filled) so CV vectors are equal length.
   - Acceptance: counts match hand-computed fixture; all 40 numbers keyed; equal-length vectors per number.
 
-- [ ] **B3. Scalar stats — CV and z-score**
+- [x] **B3. Scalar stats — CV and z-score**
   - Tests first: `test_calculate_cv` (known list → std/mean; zero-mean → 0.0), `test_calculate_z_score` (known input → expected; std==0 → 0.0).
   - Implement: `calculate_cv(values) -> float` and `calculate_z_score(current_freq, mean_freq, std_freq) -> float`, both with zero-denominator guards (new-algo.md omits these — we add them).
   - Acceptance: both pass including the guards.

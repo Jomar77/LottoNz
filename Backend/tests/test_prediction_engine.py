@@ -86,3 +86,24 @@ def test_yearly_frequencies_shape():
     lengths = {len(v) for v in y.values()}
     assert lengths == {2}
     assert sum(y[6]) == 1  # number 6 drawn once (2025)
+
+
+# --- B3: scalar stats (CV, z-score) ---------------------------------------
+
+def test_calculate_cv():
+    # mean=5, population std=2 -> cv=0.4
+    assert pe.calculate_cv([2, 4, 4, 4, 5, 5, 7, 9]) == pytest.approx(0.4)
+
+
+def test_calculate_cv_zero_mean_guard():
+    assert pe.calculate_cv([0, 0, 0]) == 0.0
+    assert pe.calculate_cv([]) == 0.0
+
+
+def test_calculate_z_score():
+    assert pe.calculate_z_score(10, 5, 2.5) == pytest.approx(2.0)
+    assert pe.calculate_z_score(2, 5, 2.5) == pytest.approx(-1.2)
+
+
+def test_calculate_z_score_zero_std_guard():
+    assert pe.calculate_z_score(10, 5, 0) == 0.0
