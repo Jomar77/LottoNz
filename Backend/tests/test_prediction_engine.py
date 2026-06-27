@@ -129,3 +129,18 @@ def test_uniformity_pvalue_in_range():
     assert isinstance(p, float)
     assert 0.0 <= p <= 1.0
     assert p > 0.05  # flat distribution
+
+
+# --- B5: left/right lean classification -----------------------------------
+
+def test_classify_lean_left():
+    assert pe.classify_lean([1, 2, 3, 4, 30, 40]) == "left"
+
+
+def test_classify_lean_right():
+    assert pe.classify_lean([1, 25, 30, 33, 38, 40]) == "right"
+
+
+def test_classify_lean_tie_is_right():
+    # 3 left / 3 right -> "right" per new-algo.md (left only if left_count > right_count)
+    assert pe.classify_lean([1, 2, 3, 30, 33, 40]) == "right"

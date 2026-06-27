@@ -75,7 +75,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `test_uniformity(frequencies, expected) -> bool` and `uniformity_pvalue(frequencies, expected) -> float` via `scipy.stats.chisquare`.
   - Acceptance: flat passes, skewed fails; p-value helper returns a [0,1] float.
 
-- [ ] **B5. Left/right lean classification**
+- [x] **B5. Left/right lean classification**
   - Tests first: `test_classify_lean_left` (`[1,2,3,4,30,40]` → "left"), `test_classify_lean_right` (`[1,25,30,33,38,40]` → "right"), tie-rule test (3/3 → "right", per new-algo.md `left if left_count > right_count`).
   - Implement: `LEFT_RANGE=(1,20)`, `RIGHT_RANGE=(21,40)`, `classify_lean(numbers) -> str`.
   - Acceptance: all three pass; tie behavior documented and asserted.

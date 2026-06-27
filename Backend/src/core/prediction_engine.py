@@ -31,6 +31,9 @@ MAIN_MIN, MAIN_MAX = 1, 40
 POWERBALL_MIN, POWERBALL_MAX = 1, 10
 NUMBERS_PER_DRAW = 6
 
+LEFT_RANGE = (1, 20)
+RIGHT_RANGE = (21, 40)
+
 
 # ---------------------------------------------------------------------------
 # B1 — Data loading + ascending DataFrame normalization
@@ -149,3 +152,18 @@ def test_uniformity(frequencies, expected) -> bool:
     pytest test (pytest only collects ``test_*`` inside test modules).
     """
     return uniformity_pvalue(frequencies, expected) > 0.05
+
+
+# ---------------------------------------------------------------------------
+# B5 — Left/right lean classification
+# ---------------------------------------------------------------------------
+def classify_lean(numbers) -> str:
+    """Classify a set of numbers as left- or right-leaning.
+
+    Left iff strictly more numbers fall in 1..20 than in 21..40; ties -> "right"
+    (mirrors new-algo.md's ``left if left_count > right_count``).
+    """
+    nums = list(numbers)
+    left_count = sum(1 for n in nums if n <= LEFT_RANGE[1])
+    right_count = len(nums) - left_count
+    return "left" if left_count > right_count else "right"
