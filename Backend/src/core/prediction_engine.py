@@ -167,3 +167,29 @@ def classify_lean(numbers) -> str:
     left_count = sum(1 for n in nums if n <= LEFT_RANGE[1])
     right_count = len(nums) - left_count
     return "left" if left_count > right_count else "right"
+
+
+# ---------------------------------------------------------------------------
+# Recency helper (shared by several strategies)
+# ---------------------------------------------------------------------------
+def get_recent_numbers(df: pd.DataFrame, last_n_draws: int) -> set[int]:
+    """Set of all main numbers appearing in the most recent ``last_n_draws``."""
+    recent = df.tail(last_n_draws)
+    return {int(n) for nums in recent["numbers"] for n in nums}
+
+
+# ---------------------------------------------------------------------------
+# B6 — Strategy 1: Burst Volatility set
+# ---------------------------------------------------------------------------
+def generate_burst_set(df: pd.DataFrame, top_n: int = 6, recent_window: int = 30) -> list[int]:
+    """High-CV (bursty) numbers that also appear in the recent window.
+
+    Rank numbers by coefficient of variation of their quarterly frequencies, take
+    the top ``top_n * 2`` candidates, then keep only those drawn in the last
+    ``recent_window`` draws (recency boost), returning up to ``top_n``.
+    """
+    quarterly = calculate_quarterly_frequencies(df)
+    cv_scores = {num: calculate_cv(freqs) for num, freqs in quarterly.items()}
+    candidates = sorted(cv_scores.items(), key=lambda kv: kv[1], reverse=True)[: top_n * 2]
+    recent = get_recent_numbers(df, recent_window)
+    return [num for num, _ in candidates if num in recent][:top_n]

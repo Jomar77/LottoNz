@@ -144,3 +144,54 @@ def test_classify_lean_right():
 def test_classify_lean_tie_is_right():
     # 3 left / 3 right -> "right" per new-algo.md (left only if left_count > right_count)
     assert pe.classify_lean([1, 2, 3, 30, 33, 40]) == "right"
+
+
+# --- B6: burst volatility set ---------------------------------------------
+
+def _build_burst_fixture():
+    """Draws where 10 is high-CV AND recent, 20 is high-CV but NOT recent.
+
+    Background numbers 1-6 appear uniformly every quarter (low CV). Burst numbers
+    cluster in specific quarters. Q1 (oldest) falls outside the last-30 window, so
+    20 (only in Q1) is excluded by the recency filter while 10 (also in Q4) is not.
+    """
+    draws = []
+    bg = [1, 2, 3, 4, 5, 6]
+
+    def add(date, nums, count):
+        for _ in range(count):
+            draws.append({"date": date, "numbers": list(nums), "powerball": 1})
+
+    # Q1 (oldest): 12 background + 3 bursts containing 10 and 20
+    add("2025-01-15", bg, 12)
+    add("2025-02-15", [7, 8, 9, 10, 11, 20], 3)
+    # Q2, Q3: background only
+    add("2025-04-15", bg, 12)
+    add("2025-07-15", bg, 12)
+    # Q4 (newest): 12 background + 3 bursts containing 10 (and 12) but NOT 20
+    add("2025-10-15", bg, 12)
+    add("2025-11-15", [7, 8, 9, 10, 11, 12], 3)
+    return draws
+
+
+def test_get_recent_numbers():
+    df = pe.to_dataframe(_build_burst_fixture())
+    recent = pe.get_recent_numbers(df, 30)
+    assert isinstance(recent, set)
+    assert 10 in recent  # appears in Q4
+    assert 20 not in recent  # only in Q1 (oldest, outside last 30 draws)
+
+
+def test_burst_set_size_and_range():
+    df = pe.to_dataframe(_build_burst_fixture())
+    result = pe.generate_burst_set(df)
+    assert len(result) <= 6
+    assert len(set(result)) == len(result)
+    assert all(1 <= n <= 40 for n in result)
+
+
+def test_burst_prefers_high_cv_recent():
+    df = pe.to_dataframe(_build_burst_fixture())
+    result = pe.generate_burst_set(df)
+    assert 10 in result  # high CV and recent
+    assert 20 not in result  # high CV but not recent

@@ -80,7 +80,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `LEFT_RANGE=(1,20)`, `RIGHT_RANGE=(21,40)`, `classify_lean(numbers) -> str`.
   - Acceptance: all three pass; tie behavior documented and asserted.
 
-- [ ] **B6. Strategy 1 — Burst Volatility set**
+- [x] **B6. Strategy 1 — Burst Volatility set**
   - Tests first: `test_burst_set_size_and_range` (≤6 unique ints in 1–40), `test_burst_prefers_high_cv_recent` (high-CV number present in last 30 draws is selected; high-CV but not recent is excluded).
   - Implement: `generate_burst_set(df, top_n=6) -> list[int]` using quarterly freqs + CV, then `get_recent_numbers(df, last_n_draws=30)` filter. Add helper `get_recent_numbers(df, last_n_draws) -> set[int]`.
   - Acceptance: valid candidate list; recency+CV preference verified.
