@@ -1,0 +1,48 @@
+{
+  "draw_reference": 1875,
+  "generated_at": "2026-05-09T08:00:00Z",
+  "sets": [
+    {
+      "id": 1,
+      "strategy": "burst_volatility",
+      "main_numbers": [2, 5, 7, 11, 28, 35],
+      "powerball": 3,
+      "rationale": "High coefficient-of-variation numbers that have appeared in recent clusters. For entertainment only — past patterns do not predict future draws."
+    },
+    {
+      "id": 2,
+      "strategy": "mean_reversion",
+      "main_numbers": [8, 14, 23, 36, 39, 40],
+      "powerball": 7,
+      "rationale": "Numbers drawn below their expected frequency over the full history. There is no statistical 'due' effect — each draw is independent."
+    },
+    {
+      "id": 3,
+      "strategy": "momentum_carry",
+      "main_numbers": [1, 9, 15, 22, 30, 33],
+      "powerball": 5,
+      "rationale": "Numbers recurring most often across the recent 30-draw window. A pattern in past noise, not a forecast."
+    },
+    {
+      "id": 4,
+      "strategy": "balanced_hybrid",
+      "main_numbers": [4, 12, 19, 25, 31, 38],
+      "powerball": 2,
+      "rationale": "A balanced mix of frequently, rarely and averagely drawn numbers. Provided purely as a themed alternative to a random pick."
+    },
+    {
+      "id": 5,
+      "strategy": "lean_bias",
+      "main_numbers": [3, 6, 10, 13, 17, 20],
+      "powerball": 9,
+      "rationale": "A left-leaning set (numbers 1-20) reflecting recent positional frequencies. Positional 'lean' carries no predictive weight."
+    }
+  ],
+  "metadata": {
+    "total_draws_analyzed": 1874,
+    "date_range": "2001-02-17 to 2026-05-09",
+    "uniformity_confirmed": true,
+    "chi_square_p_main": 0.585,
+    "chi_square_p_powerball": 0.178
+  }
+}
