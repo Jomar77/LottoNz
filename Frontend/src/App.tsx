@@ -8,7 +8,8 @@ function App() {
   const [data, setData] = useState<LotteryResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [generatedNumbers, setGeneratedNumbers] = useState<GeneratedNumbers | null>(null);
+  const [generatedList, setGeneratedList] = useState<GeneratedNumbers[]>([]);
+  const [bulkCount, setBulkCount] = useState(1);
   const [manualNumbers, setManualNumbers] = useState('');
   const [manualCheckMessage, setManualCheckMessage] = useState<string | null>(null);
   const [showPreferences, setShowPreferences] = useState(false);
@@ -37,8 +38,11 @@ function App() {
 
   const handleGenerate = () => {
     if (data.length === 0) return;
-    const numbers = generateNumbers(data, preferences);
-    setGeneratedNumbers(numbers);
+    const tickets: GeneratedNumbers[] = [];
+    for (let i = 0; i < bulkCount; i++) {
+      tickets.push(generateNumbers(data, preferences));
+    }
+    setGeneratedList(tickets);
   };
 
   const handleManualCheck = () => {
@@ -48,9 +52,11 @@ function App() {
     }
 
     const parsedNumbers = manualNumbers
+      .trim()
       .split(/[\s,]+/)
-      .map(value => Number(value.trim()))
-      .filter(value => !Number.isNaN(value));
+      .filter(value => value !== '')
+      .map(value => Number(value))
+      .filter(value => !Number.isNaN(value) && value !== 0);
 
     if (parsedNumbers.length !== 6) {
       setManualCheckMessage('Enter exactly 6 numbers separated by commas or spaces.');
@@ -134,7 +140,7 @@ function App() {
                 <ChevronDown className="w-5 h-5 text-gray-400" />
               )}
             </button>
-            
+
             {showPreferences && (
               <div className="px-6 pb-6 pt-2 bg-gray-50 space-y-4">
                 {/* Spread */}
@@ -206,14 +212,34 @@ function App() {
             )}
           </div>
 
-          {/* Generate Button */}
-          <div className="p-6">
+          {/* Bulk Count + Generate */}
+          <div className="p-6 space-y-3">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Number of tickets
+              </label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 5, 10, 20].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setBulkCount(n)}
+                    className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all ${
+                      bulkCount === n
+                        ? 'bg-base text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
               onClick={handleGenerate}
               disabled={loading || data.length === 0}
               className="w-full py-4 bg-gradient-to-r from-base to-highlight-blue text-white text-xl font-bold rounded-xl hover:from-base/90 hover:to-highlight-blue/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              {loading ? 'Loading Data...' : 'Generate Lucky Numbers'}
+              {loading ? 'Loading Data...' : `Generate ${bulkCount > 1 ? `${bulkCount} Tickets` : 'Lucky Numbers'}`}
             </button>
           </div>
 
@@ -261,29 +287,40 @@ function App() {
           )}
 
           {/* Generated Numbers Display */}
-          {generatedNumbers && (
-            <div className="px-6 pb-6">
-              <div className="bg-gradient-to-br from-base/10 to-highlight-blue/10 rounded-xl p-6 border-2 border-base/20">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                  Your Lucky Numbers
-                </h3>
-                <div className="flex items-center justify-center gap-3 flex-wrap">
-                  {generatedNumbers.numbers.map((num, idx) => (
+          {generatedList.length > 0 && (
+            <div className="px-6 pb-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 text-center">
+                {generatedList.length > 1 ? `Your ${generatedList.length} Lucky Tickets` : 'Your Lucky Numbers'}
+              </h3>
+              {generatedList.map((ticket, ticketIdx) => (
+                <div
+                  key={ticketIdx}
+                  className="bg-gradient-to-br from-base/10 to-highlight-blue/10 rounded-xl p-4 border-2 border-base/20"
+                >
+                  {generatedList.length > 1 && (
+                    <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
+                      Ticket {ticketIdx + 1}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-center gap-3 flex-wrap">
+                    {ticket.numbers.map((num, idx) => (
+                      <div
+                        key={idx}
+                        className="w-14 h-14 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-xl font-bold shadow-lg animate-bounce"
+                        style={{ animationDelay: `${(ticketIdx * 7 + idx) * 60}ms`, animationDuration: '1s', animationIterationCount: '1' }}
+                      >
+                        {num}
+                      </div>
+                    ))}
                     <div
-                      key={idx}
-                      className="w-16 h-16 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-2xl font-bold shadow-lg animate-bounce"
-                      style={{ animationDelay: `${idx * 100}ms`, animationDuration: '1s', animationIterationCount: '1' }}
+                      className="w-14 h-14 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white animate-bounce"
+                      style={{ animationDelay: `${(ticketIdx * 7 + 6) * 60}ms`, animationDuration: '1s', animationIterationCount: '1' }}
                     >
-                      {num}
+                      {ticket.powerball}
                     </div>
-                  ))}
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white animate-bounce"
-                    style={{ animationDelay: '600ms', animationDuration: '1s', animationIterationCount: '1' }}
-                  >
-                    {generatedNumbers.powerball}
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           )}
         </div>
