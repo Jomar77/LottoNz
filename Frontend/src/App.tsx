@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
+﻿import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
 import { Search, Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { fetchLotteryData } from './dataService';
 import { findHistoricalMatch, generateNumbers } from './utils';
@@ -168,7 +168,7 @@ function App() {
         <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Lucky Tickets — left on desktop, below content on mobile */}
-          <div className="order-2 lg:order-1 w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]">
+          <div className="order-2 lg:order-1 w-full lg:w-[28rem] flex-shrink-0 lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]">
             <div className="bg-white rounded-2xl shadow-2xl overflow-hidden lg:h-full lg:flex lg:flex-col">
 
               {/* Panel header */}
@@ -264,21 +264,28 @@ function App() {
                     </p>
                   </div>
 
-                  {/* Desktop: plain list, scrolls inside the card */}
-                  <div className="hidden lg:block flex-1 overflow-y-auto divide-y divide-gray-100">
+                  {/* Desktop: number balls, scrolls inside the card */}
+                  <div className="hidden lg:block flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
                     {generatedList.map((ticket, ticketIdx) => (
-                      <div key={ticketIdx} className="px-5 py-2.5 flex items-center gap-2 min-w-0">
+                      <div key={ticketIdx} className="flex items-center gap-2.5 rounded-xl bg-gray-50 px-3 py-2.5">
                         {generatedList.length > 1 && (
-                          <span className="text-xs font-semibold text-gray-400 w-4 flex-shrink-0 tabular-nums text-right">
+                          <span className="text-sm font-semibold text-gray-400 w-5 flex-shrink-0 tabular-nums text-right">
                             {ticketIdx + 1}
                           </span>
                         )}
-                        <span className="font-mono text-xs text-gray-800 tabular-nums flex-1 whitespace-nowrap">
-                          {ticket.numbers.map(n => String(n).padStart(2, ' ')).join('  ')}
-                        </span>
-                        <span className="font-mono text-xs font-bold text-accent flex-shrink-0 whitespace-nowrap">
-                          PB {ticket.powerball}
-                        </span>
+                        <div className="flex items-center gap-2 flex-1">
+                          {ticket.numbers.map((num, idx) => (
+                            <span
+                              key={idx}
+                              className="w-10 h-10 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-base font-bold shadow-sm tabular-nums"
+                            >
+                              {num}
+                            </span>
+                          ))}
+                          <span className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-base font-bold shadow-md border-2 border-white tabular-nums">
+                            {ticket.powerball}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -356,9 +363,9 @@ function App() {
               </div>
             )}
 
-            {/* Main card: Preferences + Manual Check — wrapper grows to fill remaining column height */}
-            <div className="flex-1 min-h-0 relative">
-            <div className="lg:absolute lg:inset-0 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Main card: Preferences + Manual Check — fills column height to match Lucky Tickets; scrolls only if it ever overflows */}
+            <div className="lg:flex-1 lg:min-h-0">
+            <div className="bg-white rounded-2xl shadow-2xl overflow-y-auto lg:h-full flex flex-col">
               {/* Preferences */}
               <div className="border-b border-gray-200">
                 <button
@@ -377,10 +384,10 @@ function App() {
                 </button>
 
                 {showPreferences && (
-                  <div className="px-6 pb-6 pt-2 bg-gray-50 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Spread</label>
-                      <div className="flex gap-2">
+                  <div className="px-6 pb-6 pt-2 bg-gray-50 space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                      <label className="sm:w-40 sm:flex-shrink-0 text-sm font-medium text-gray-700">Spread</label>
+                      <div className="flex gap-2 flex-1">
                         {(['tight', 'wide', 'mixed'] as const).map((option) => (
                           <button
                             key={option}
@@ -397,9 +404,9 @@ function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Leaning</label>
-                      <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                      <label className="sm:w-40 sm:flex-shrink-0 text-sm font-medium text-gray-700">Leaning</label>
+                      <div className="flex gap-2 flex-1">
                         {(['left', 'middle', 'right'] as const).map((option) => (
                           <button
                             key={option}
@@ -416,9 +423,9 @@ function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Consecutive Numbers</label>
-                      <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                      <label className="sm:w-40 sm:flex-shrink-0 text-sm font-medium text-gray-700">Consecutive Numbers</label>
+                      <div className="flex gap-2 flex-1">
                         {(['yes', 'no'] as const).map((option) => (
                           <button
                             key={option}
