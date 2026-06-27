@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
 import { Search, Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { fetchLotteryData } from './dataService';
 import { findHistoricalMatch, generateNumbers } from './utils';
@@ -10,6 +10,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [generatedList, setGeneratedList] = useState<GeneratedNumbers[]>([]);
   const [bulkCount, setBulkCount] = useState(1);
+  const [bulkInputStr, setBulkInputStr] = useState('1');
+  const [countBounce, setCountBounce] = useState(false);
   const [manualNumbers, setManualNumbers] = useState('');
   const [manualCheckMessage, setManualCheckMessage] = useState<string | null>(null);
   const [showPreferences, setShowPreferences] = useState(false);
@@ -18,6 +20,8 @@ function App() {
     leaning: 'middle',
     consecutive: 'yes'
   });
+
+  const scrollZoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -35,6 +39,43 @@ function App() {
     }
     loadData();
   }, []);
+
+  const adjustCount = useCallback((delta: number) => {
+    setBulkCount(prev => {
+      const next = Math.max(1, Math.min(50, prev + delta));
+      setBulkInputStr(String(next));
+      return next;
+    });
+    setCountBounce(true);
+    setTimeout(() => setCountBounce(false), 180);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollZoneRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      adjustCount(e.deltaY < 0 ? 1 : -1);
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [adjustCount]);
+
+  const handleCountInput = (e: ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    setBulkInputStr(raw);
+    const n = parseInt(raw, 10);
+    if (!isNaN(n) && n >= 1 && n <= 50) {
+      setBulkCount(n);
+    }
+  };
+
+  const handleCountBlur = () => {
+    const n = parseInt(bulkInputStr, 10);
+    const clamped = isNaN(n) || n < 1 ? 1 : Math.min(50, n);
+    setBulkCount(clamped);
+    setBulkInputStr(String(clamped));
+  };
 
   const handleGenerate = () => {
     if (data.length === 0) return;
@@ -87,7 +128,7 @@ function App() {
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-3">
@@ -122,207 +163,252 @@ function App() {
           </div>
         )}
 
-        {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Preferences Section */}
-          <div className="border-b border-gray-200">
-            <button
-              onClick={() => setShowPreferences(!showPreferences)}
-              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-highlight-blue" />
-                <span className="font-semibold text-gray-700">Generation Preferences</span>
-              </div>
-              {showPreferences ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
+        {/* Two-column layout */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-            {showPreferences && (
-              <div className="px-6 pb-6 pt-2 bg-gray-50 space-y-4">
-                {/* Spread */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Spread
-                  </label>
-                  <div className="flex gap-2">
-                    {(['tight', 'wide', 'mixed'] as const).map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => setPreferences({ ...preferences, spread: option })}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                          preferences.spread === option
-                            ? 'bg-base text-white shadow-md'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                        }`}
-                      >
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Leaning */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Leaning
-                  </label>
-                  <div className="flex gap-2">
-                    {(['left', 'middle', 'right'] as const).map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => setPreferences({ ...preferences, leaning: option })}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                          preferences.leaning === option
-                            ? 'bg-highlight-blue text-white shadow-md'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                        }`}
-                      >
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Consecutive */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Consecutive Numbers
-                  </label>
-                  <div className="flex gap-2">
-                    {(['yes', 'no'] as const).map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => setPreferences({ ...preferences, consecutive: option })}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                          preferences.consecutive === option
-                            ? 'bg-base text-white shadow-md'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                        }`}
-                      >
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Bulk Count + Generate */}
-          <div className="p-6 space-y-3">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                Number of tickets
-              </label>
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 5, 10, 20].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setBulkCount(n)}
-                    className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all ${
-                      bulkCount === n
-                        ? 'bg-base text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <button
-              onClick={handleGenerate}
-              disabled={loading || data.length === 0}
-              className="w-full py-4 bg-gradient-to-r from-base to-highlight-blue text-white text-xl font-bold rounded-xl hover:from-base/90 hover:to-highlight-blue/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              {loading ? 'Loading Data...' : `Generate ${bulkCount > 1 ? `${bulkCount} Tickets` : 'Lucky Numbers'}`}
-            </button>
-          </div>
-
-          {/* Manual History Check */}
-          <div className="px-6 pb-6">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Search className="w-5 h-5 text-highlight-blue" />
-                <h3 className="text-lg font-semibold text-gray-800">Check Your Own Numbers</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">
-                Enter 6 main numbers to see whether the exact combination already exists in the dataset.
-              </p>
-              <div className="flex flex-col gap-3">
-                <input
-                  type="text"
-                  value={manualNumbers}
-                  onChange={(event) => setManualNumbers(event.target.value)}
-                  placeholder="Example: 3, 7, 12, 18, 24, 31"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder:text-gray-400 focus:border-highlight-blue focus:outline-none focus:ring-2 focus:ring-highlight-blue/20"
-                />
+          {/* Left column: main card */}
+          <div className="flex-1 min-w-0">
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+              {/* Preferences Section */}
+              <div className="border-b border-gray-200">
                 <button
-                  onClick={handleManualCheck}
-                  disabled={loading || data.length === 0}
-                  className="w-full rounded-lg bg-gray-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setShowPreferences(!showPreferences)}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
-                  Check Against Dataset
-                </button>
-              </div>
-              {manualCheckMessage && (
-                <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
-                  {manualCheckMessage}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="px-6 pb-6">
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            </div>
-          )}
-
-          {/* Generated Numbers Display */}
-          {generatedList.length > 0 && (
-            <div className="px-6 pb-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 text-center">
-                {generatedList.length > 1 ? `Your ${generatedList.length} Lucky Tickets` : 'Your Lucky Numbers'}
-              </h3>
-              {generatedList.map((ticket, ticketIdx) => (
-                <div
-                  key={ticketIdx}
-                  className="bg-gradient-to-br from-base/10 to-highlight-blue/10 rounded-xl p-4 border-2 border-base/20"
-                >
-                  {generatedList.length > 1 && (
-                    <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
-                      Ticket {ticketIdx + 1}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-highlight-blue" />
+                    <span className="font-semibold text-gray-700">Generation Preferences</span>
+                  </div>
+                  {showPreferences ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
                   )}
-                  <div className="flex items-center justify-center gap-3 flex-wrap">
-                    {ticket.numbers.map((num, idx) => (
-                      <div
-                        key={idx}
-                        className="w-14 h-14 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-xl font-bold shadow-lg animate-bounce"
-                        style={{ animationDelay: `${(ticketIdx * 7 + idx) * 60}ms`, animationDuration: '1s', animationIterationCount: '1' }}
-                      >
-                        {num}
+                </button>
+
+                {showPreferences && (
+                  <div className="px-6 pb-6 pt-2 bg-gray-50 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Spread</label>
+                      <div className="flex gap-2">
+                        {(['tight', 'wide', 'mixed'] as const).map((option) => (
+                          <button
+                            key={option}
+                            onClick={() => setPreferences({ ...preferences, spread: option })}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                              preferences.spread === option
+                                ? 'bg-base text-white shadow-md'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
+                          >
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                    <div
-                      className="w-14 h-14 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white animate-bounce"
-                      style={{ animationDelay: `${(ticketIdx * 7 + 6) * 60}ms`, animationDuration: '1s', animationIterationCount: '1' }}
-                    >
-                      {ticket.powerball}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Leaning</label>
+                      <div className="flex gap-2">
+                        {(['left', 'middle', 'right'] as const).map((option) => (
+                          <button
+                            key={option}
+                            onClick={() => setPreferences({ ...preferences, leaning: option })}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                              preferences.leaning === option
+                                ? 'bg-highlight-blue text-white shadow-md'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
+                          >
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Consecutive Numbers</label>
+                      <div className="flex gap-2">
+                        {(['yes', 'no'] as const).map((option) => (
+                          <button
+                            key={option}
+                            onClick={() => setPreferences({ ...preferences, consecutive: option })}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                              preferences.consecutive === option
+                                ? 'bg-base text-white shadow-md'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            }`}
+                          >
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* Manual History Check */}
+              <div className="p-6">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Search className="w-5 h-5 text-highlight-blue" />
+                    <h3 className="text-lg font-semibold text-gray-800">Check Your Own Numbers</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Enter 6 main numbers to see whether the exact combination already exists in the dataset.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <input
+                      type="text"
+                      value={manualNumbers}
+                      onChange={(event) => setManualNumbers(event.target.value)}
+                      placeholder="Example: 3, 7, 12, 18, 24, 31"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder:text-gray-400 focus:border-highlight-blue focus:outline-none focus:ring-2 focus:ring-highlight-blue/20"
+                    />
+                    <button
+                      onClick={handleManualCheck}
+                      disabled={loading || data.length === 0}
+                      className="w-full rounded-lg bg-gray-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Check Against Dataset
+                    </button>
+                  </div>
+                  {manualCheckMessage && (
+                    <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                      {manualCheckMessage}
+                    </div>
+                  )}
                 </div>
-              ))}
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="px-6 pb-6">
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    {error}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Right column: Lucky Tickets side panel */}
+          <div className="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-8">
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+              {/* Panel header */}
+              <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-highlight-blue" />
+                  <h3 className="text-lg font-semibold text-gray-800">Lucky Tickets</h3>
+                </div>
+              </div>
+
+              {/* Ticket count scroll control */}
+              <div className="p-6 border-b border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">
+                  Number of Tickets
+                </p>
+                <div
+                  ref={scrollZoneRef}
+                  className="flex items-center justify-center gap-5 cursor-ns-resize select-none"
+                  title="Scroll to adjust"
+                >
+                  <button
+                    onClick={() => adjustCount(-1)}
+                    disabled={bulkCount <= 1}
+                    className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 disabled:opacity-25 flex items-center justify-center transition-all text-gray-600 font-bold text-lg leading-none"
+                  >
+                    −
+                  </button>
+
+                  <div
+                    className={`transition-transform duration-150 ease-out ${countBounce ? 'scale-125' : 'scale-100'}`}
+                  >
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={bulkInputStr}
+                      onChange={handleCountInput}
+                      onBlur={handleCountBlur}
+                      className="w-20 text-center text-5xl font-bold text-gray-800 bg-transparent border-none outline-none focus:ring-2 focus:ring-highlight-blue/30 rounded-lg cursor-text"
+                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                      maxLength={2}
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => adjustCount(1)}
+                    disabled={bulkCount >= 50}
+                    className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 disabled:opacity-25 flex items-center justify-center transition-all text-gray-600 font-bold text-lg leading-none"
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 text-center mt-3">
+                  Scroll, click ±, or type · max 50
+                </p>
+              </div>
+
+              {/* Generate button */}
+              <div className="p-5 border-b border-gray-100">
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading || data.length === 0}
+                  className="w-full py-4 bg-gradient-to-r from-base to-highlight-blue text-white text-lg font-bold rounded-xl hover:from-base/90 hover:to-highlight-blue/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  {loading ? 'Loading Data...' : `Generate${bulkCount > 1 ? ` ${bulkCount} Tickets` : ''}`}
+                </button>
+              </div>
+
+              {/* Generated tickets list */}
+              {generatedList.length > 0 && (
+                <>
+                  <div className="px-5 py-3 bg-gray-50">
+                    <p className="text-xs font-semibold text-gray-500 text-center uppercase tracking-wider">
+                      {generatedList.length > 1 ? `${generatedList.length} Tickets` : 'Your Lucky Numbers'}
+                    </p>
+                  </div>
+                  <div className="divide-y divide-gray-100 overflow-y-auto max-h-[52vh]">
+                    {generatedList.map((ticket, ticketIdx) => (
+                      <div key={ticketIdx} className="px-4 py-3">
+                        {generatedList.length > 1 && (
+                          <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                            Ticket {ticketIdx + 1}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {ticket.numbers.map((num, idx) => (
+                            <div
+                              key={idx}
+                              className="w-9 h-9 rounded-full bg-gradient-to-br from-base to-base flex items-center justify-center text-white text-sm font-bold shadow-md animate-bounce"
+                              style={{
+                                animationDelay: `${(ticketIdx * 7 + idx) * 60}ms`,
+                                animationDuration: '1s',
+                                animationIterationCount: '1'
+                              }}
+                            >
+                              {num}
+                            </div>
+                          ))}
+                          <div
+                            className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-accent flex items-center justify-center text-white text-sm font-bold shadow-md border-2 border-white animate-bounce"
+                            style={{
+                              animationDelay: `${(ticketIdx * 7 + 6) * 60}ms`,
+                              animationDuration: '1s',
+                              animationIterationCount: '1'
+                            }}
+                          >
+                            {ticket.powerball}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
