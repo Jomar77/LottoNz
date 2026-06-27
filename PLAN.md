@@ -60,7 +60,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: new module `backend/src/core/prediction_engine.py` with `DATA_PATH`/`OUTPUT_PATH` constants (mirroring `decay_generator.py`'s `REPO_ROOT/"frontend"/"public"/...`), `load_draws(path=DATA_PATH) -> list[dict]`, `to_dataframe(draws) -> pd.DataFrame` sorting ascending by date.
   - Acceptance: both tests pass; loader works against the real 1874-row `results.json`.
 
-- [ ] **B2. Frequency distributions (overall, quarterly, yearly)**
+- [x] **B2. Frequency distributions (overall, quarterly, yearly)**
   - Tests first: `test_calculate_frequencies_overall` (hand-counted fixture → `{1..40: count}`, zero-filled), `test_quarterly_frequencies_shape` (one entry per `(year, quarter)` bucket), `test_yearly_frequencies_shape` (one per year). Fixture spans ≥2 quarters/years.
   - Implement: `calculate_frequencies(draws_or_df) -> dict[int,int]`; `calculate_quarterly_frequencies(df) -> dict[int, list[int]]` via `df.date.dt.to_period("Q")`; `calculate_yearly_frequencies(df) -> dict[int, list[int]]`. All 40 numbers always present (zero-filled) so CV vectors are equal length.
   - Acceptance: counts match hand-computed fixture; all 40 numbers keyed; equal-length vectors per number.

@@ -49,3 +49,40 @@ def test_to_dataframe_schema():
     assert len(df.iloc[0]["numbers"]) == 6
     # powerball column is integer-typed
     assert pd.api.types.is_integer_dtype(df["powerball"])
+
+
+# --- B2: frequency distributions ------------------------------------------
+
+def test_calculate_frequencies_overall():
+    # In SAMPLE_DRAWS every drawn number appears exactly once; 10 numbers never appear.
+    freqs = pe.calculate_frequencies(SAMPLE_DRAWS)
+    assert set(freqs.keys()) == set(range(1, 41))  # all 40 zero-filled
+    drawn = {n for d in SAMPLE_DRAWS for n in d["numbers"]}
+    for n in range(1, 41):
+        assert freqs[n] == (1 if n in drawn else 0)
+
+
+def test_calculate_frequencies_accepts_dataframe():
+    df = pe.to_dataframe(SAMPLE_DRAWS)
+    assert pe.calculate_frequencies(df) == pe.calculate_frequencies(SAMPLE_DRAWS)
+
+
+def test_quarterly_frequencies_shape():
+    df = pe.to_dataframe(SAMPLE_DRAWS)
+    q = pe.calculate_quarterly_frequencies(df)
+    assert set(q.keys()) == set(range(1, 41))
+    # SAMPLE spans 2025Q1, 2025Q4, 2026Q2 -> 3 buckets; equal-length vectors.
+    lengths = {len(v) for v in q.values()}
+    assert lengths == {3}
+    assert sum(q[3]) == 1  # number 3 drawn once (2026Q2)
+    assert sum(q[15]) == 0  # number 15 never drawn
+
+
+def test_yearly_frequencies_shape():
+    df = pe.to_dataframe(SAMPLE_DRAWS)
+    y = pe.calculate_yearly_frequencies(df)
+    assert set(y.keys()) == set(range(1, 41))
+    # SAMPLE spans 2025, 2026 -> 2 buckets.
+    lengths = {len(v) for v in y.values()}
+    assert lengths == {2}
+    assert sum(y[6]) == 1  # number 6 drawn once (2025)

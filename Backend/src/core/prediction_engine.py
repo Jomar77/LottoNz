@@ -53,3 +53,50 @@ def to_dataframe(draws: list[dict]) -> pd.DataFrame:
     df["powerball"] = df["powerball"].astype(int)
     df = df.sort_values("date").reset_index(drop=True)
     return df
+
+
+def _as_dataframe(draws_or_df) -> pd.DataFrame:
+    if isinstance(draws_or_df, pd.DataFrame):
+        return draws_or_df
+    return to_dataframe(draws_or_df)
+
+
+# ---------------------------------------------------------------------------
+# B2 — Frequency distributions (overall, quarterly, yearly)
+# ---------------------------------------------------------------------------
+def calculate_frequencies(draws_or_df) -> dict[int, int]:
+    """Overall count per main number, zero-filled for all of 1..40."""
+    df = _as_dataframe(draws_or_df)
+    freqs = {n: 0 for n in range(MAIN_MIN, MAIN_MAX + 1)}
+    for nums in df["numbers"]:
+        for n in nums:
+            freqs[int(n)] += 1
+    return freqs
+
+
+def _bucketed_frequencies(df: pd.DataFrame, period_freq: str) -> dict[int, list[int]]:
+    """Per-number count within each time bucket, as equal-length vectors.
+
+    ``period_freq`` is a pandas offset alias ("Q" quarterly, "Y" yearly). Every
+    number 1..40 maps to a list with one count per bucket (chronological order),
+    so the vectors are equal length for CV computation.
+    """
+    periods = df["date"].dt.to_period(period_freq)
+    ordered_buckets = sorted(periods.unique())
+    bucket_index = {p: i for i, p in enumerate(ordered_buckets)}
+    n_buckets = len(ordered_buckets)
+
+    result = {n: [0] * n_buckets for n in range(MAIN_MIN, MAIN_MAX + 1)}
+    for period, nums in zip(periods, df["numbers"]):
+        i = bucket_index[period]
+        for n in nums:
+            result[int(n)][i] += 1
+    return result
+
+
+def calculate_quarterly_frequencies(df: pd.DataFrame) -> dict[int, list[int]]:
+    return _bucketed_frequencies(_as_dataframe(df), "Q")
+
+
+def calculate_yearly_frequencies(df: pd.DataFrame) -> dict[int, list[int]]:
+    return _bucketed_frequencies(_as_dataframe(df), "Y")
