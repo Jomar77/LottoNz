@@ -70,7 +70,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `calculate_cv(values) -> float` and `calculate_z_score(current_freq, mean_freq, std_freq) -> float`, both with zero-denominator guards (new-algo.md omits these — we add them).
   - Acceptance: both pass including the guards.
 
-- [ ] **B4. Chi-square uniformity test**
+- [x] **B4. Chi-square uniformity test**
   - Tests first: `test_uniformity_true_for_flat` (40 equal freqs → truthy / `p>0.05`), `test_uniformity_false_for_skewed` (one number over-represented → falsy). Assert the p-value helper returns a float in [0,1].
   - Implement: `test_uniformity(frequencies, expected) -> bool` and `uniformity_pvalue(frequencies, expected) -> float` via `scipy.stats.chisquare`.
   - Acceptance: flat passes, skewed fails; p-value helper returns a [0,1] float.

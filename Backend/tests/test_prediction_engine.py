@@ -107,3 +107,25 @@ def test_calculate_z_score():
 
 def test_calculate_z_score_zero_std_guard():
     assert pe.calculate_z_score(10, 5, 0) == 0.0
+
+
+# --- B4: chi-square uniformity --------------------------------------------
+
+def test_uniformity_true_for_flat():
+    freqs = {n: 10 for n in range(1, 41)}
+    assert pe.test_uniformity(freqs, 10) is True
+
+
+def test_uniformity_false_for_skewed():
+    freqs = {n: 5 for n in range(1, 41)}
+    freqs[1] = 200  # one number wildly over-represented
+    expected = sum(freqs.values()) / 40
+    assert pe.test_uniformity(freqs, expected) is False
+
+
+def test_uniformity_pvalue_in_range():
+    freqs = {n: 10 for n in range(1, 41)}
+    p = pe.uniformity_pvalue(freqs, 10)
+    assert isinstance(p, float)
+    assert 0.0 <= p <= 1.0
+    assert p > 0.05  # flat distribution

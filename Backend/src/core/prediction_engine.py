@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 # ---------------------------------------------------------------------------
 # Paths (mirror decay_generator.py)
@@ -122,3 +123,29 @@ def calculate_z_score(current_freq: float, mean_freq: float, std_freq: float) ->
     if std_freq == 0:
         return 0.0
     return float((current_freq - mean_freq) / std_freq)
+
+
+# ---------------------------------------------------------------------------
+# B4 — Chi-square uniformity test
+# ---------------------------------------------------------------------------
+def _observed_list(frequencies) -> list[float]:
+    if isinstance(frequencies, dict):
+        return [float(frequencies[k]) for k in sorted(frequencies)]
+    return [float(v) for v in frequencies]
+
+
+def uniformity_pvalue(frequencies, expected) -> float:
+    """Chi-square goodness-of-fit p-value against a uniform expectation."""
+    observed = _observed_list(frequencies)
+    exp = [float(expected)] * len(observed)
+    _, p_value = stats.chisquare(observed, f_exp=exp)
+    return float(p_value)
+
+
+def test_uniformity(frequencies, expected) -> bool:
+    """True if the distribution is consistent with uniform (p > 0.05).
+
+    Note: named ``test_uniformity`` to mirror new-algo.md; it is a helper, not a
+    pytest test (pytest only collects ``test_*`` inside test modules).
+    """
+    return uniformity_pvalue(frequencies, expected) > 0.05
