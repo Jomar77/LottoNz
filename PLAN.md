@@ -55,7 +55,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
 > Team Backend-Engine. Touches `backend/` only. Validates its output with the Phase A
 > `validate_predictions_document`.
 
-- [ ] **B1. Data loader + ascending DataFrame normalization**
+- [x] **B1. Data loader + ascending DataFrame normalization**
   - Tests first: in `backend/tests/test_prediction_engine.py`, `test_load_draws_returns_sorted_ascending` and `test_to_dataframe_schema`. Feed a tiny fixture (results.json shape, most-recent-first); assert `load_draws()`/`to_dataframe()` returns rows sorted **oldest→newest**, a `date` column parsed to `pd.Timestamp`, a list-valued `numbers` column, an int `powerball` column. Assert it reads `frontend/public/results.json` when no path given.
   - Implement: new module `backend/src/core/prediction_engine.py` with `DATA_PATH`/`OUTPUT_PATH` constants (mirroring `decay_generator.py`'s `REPO_ROOT/"frontend"/"public"/...`), `load_draws(path=DATA_PATH) -> list[dict]`, `to_dataframe(draws) -> pd.DataFrame` sorting ascending by date.
   - Acceptance: both tests pass; loader works against the real 1874-row `results.json`.
