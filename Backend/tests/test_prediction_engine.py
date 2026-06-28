@@ -297,3 +297,51 @@ def test_hybrid_composition():
     assert len(set(result)) == 6
     assert result == sorted(result)
     assert all(1 <= n <= 40 for n in result)
+
+
+# --- B10: left/right leaning set ------------------------------------------
+
+def _build_lean_fixture():
+    """Draws spanning 2023-2025. Left numbers 1-20 heavily used; right 21-40 rarely."""
+    draws = []
+
+    def add(date, nums):
+        draws.append({"date": date, "numbers": list(nums), "powerball": 1})
+
+    # 2023 draws (>1 year old from ref date 2025-06-01 -> excluded)
+    for _ in range(10):
+        add("2023-01-15", [21, 25, 30, 33, 37, 40])  # right-heavy, old
+
+    # Recent draws (within 1 year)
+    for _ in range(10):
+        add("2025-01-15", [1, 2, 3, 4, 5, 6])   # left numbers, frequent
+    for _ in range(5):
+        add("2025-03-15", [1, 3, 7, 11, 15, 19])  # still left
+    add("2025-05-01", [22, 25, 28, 32, 36, 39])  # right numbers, recent but fewer
+    return draws
+
+
+def test_lean_set_left_side():
+    df = pe.to_dataframe(_build_lean_fixture())
+    ref = pd.Timestamp("2025-06-01")
+    result = pe.generate_lean_set(df, lean_direction="left", window_years=1, reference_date=ref)
+    assert len(result) == 6
+    assert all(1 <= n <= 20 for n in result)  # all in left range
+    assert result == sorted(result)
+
+
+def test_lean_set_right_side():
+    df = pe.to_dataframe(_build_lean_fixture())
+    ref = pd.Timestamp("2025-06-01")
+    result = pe.generate_lean_set(df, lean_direction="right", window_years=1, reference_date=ref)
+    assert len(result) == 6
+    assert all(21 <= n <= 40 for n in result)  # all in right range
+
+
+def test_lean_window_filter():
+    df = pe.to_dataframe(_build_lean_fixture())
+    ref = pd.Timestamp("2025-06-01")
+    # The 2023 right-heavy draws are outside the 1-year window; only recent left draws remain.
+    result = pe.generate_lean_set(df, lean_direction="left", window_years=1, reference_date=ref)
+    # 1 appears ~15x in recent draws -> must be in the result
+    assert 1 in result

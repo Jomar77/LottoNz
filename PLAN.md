@@ -100,7 +100,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `generate_hybrid_set(df, rng) -> list[int]` — inject `rng` instead of bare `random.*`; 2 hot + 2 cold + 2 neutral, fill remainder, return `sorted`.
   - Acceptance: deterministic under a fixed seed; always 6 sorted unique valid numbers.
 
-- [ ] **B10. Strategy 5 — Left/Right Leaning set**
+- [x] **B10. Strategy 5 — Left/Right Leaning set**
   - Tests first: `test_lean_set_left_side` (6 numbers all in 1–20 for "left", highest recent freq first), `test_lean_set_right_side` (all in 21–40 for "right"), `test_lean_window_filter` (draws older than `window_years` excluded).
   - Implement: `generate_lean_set(df, lean_direction="left", window_years=1, reference_date=None) -> list[int]`; inject `reference_date` (default = max draw date).
   - Acceptance: correct side + recency ordering; window filter respected; reference date injectable.

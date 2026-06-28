@@ -288,3 +288,30 @@ def generate_hybrid_set(df: pd.DataFrame, rng) -> list[int]:
         result.append(rng.choice(remaining))
 
     return sorted(result)
+
+
+# ---------------------------------------------------------------------------
+# B10 — Strategy 5: Left/Right Leaning set
+# ---------------------------------------------------------------------------
+def generate_lean_set(
+    df: pd.DataFrame,
+    lean_direction: str = "left",
+    window_years: int = 1,
+    reference_date: pd.Timestamp | None = None,
+) -> list[int]:
+    """Numbers from the target side (1-20 left / 21-40 right) with highest recent frequency.
+
+    ``reference_date`` is injectable so tests are stable; defaults to the max draw date.
+    Draws older than ``window_years`` before ``reference_date`` are excluded.
+    Always returns exactly 6 sorted numbers from the target side.
+    """
+    ref = reference_date if reference_date is not None else df["date"].max()
+    cutoff = ref - pd.DateOffset(years=window_years)
+    recent = df[df["date"] >= cutoff]
+
+    lo, hi = LEFT_RANGE if lean_direction == "left" else RIGHT_RANGE
+    target_nums = list(range(lo, hi + 1))
+
+    freqs = calculate_frequencies(recent)
+    by_freq_desc = sorted(target_nums, key=lambda n: (-freqs[n], n))
+    return sorted(by_freq_desc[:6])
