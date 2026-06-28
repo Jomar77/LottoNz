@@ -120,7 +120,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `generate_prediction_sets(df, num_sets=5, exclude_recent_draws=5, seed=None) -> list[dict]` wiring B6–B12, threading one seeded rng to all randomized steps, using `get_recent_numbers(df, exclude_recent_draws)` for avoidance. Powerball strategy per set: burst→cluster, mean_reversion→cold, momentum→hot, balanced_hybrid→balanced, lean_bias→balanced.
   - Acceptance: returns the 5 strategy-tagged sets; fully reproducible under a seed.
 
-- [ ] **B14. Output formatter `format_output` (JSON matching the contract)**
+- [x] **B14. Output formatter `format_output` (JSON matching the contract)**
   - Tests first: `test_format_output_schema` (validates against Phase A `validate_predictions_document`), `test_format_output_metadata` (`total_draws_analyzed`, `date_range` = "first to last", `uniformity_confirmed`, `chi_square_p_main`, `chi_square_p_powerball` from B4), `test_generated_at_injectable` (fixed timestamp → verbatim).
   - Implement: `format_output(sets, df, draw_reference=None, generated_at=None) -> dict`; `generated_at` defaults to `datetime.now(UTC)` ISO-Z but injectable; per-strategy `rationale` strings; map internal `main/pb` → output `main_numbers/powerball`; `id` 1-based.
   - Acceptance: emitted dict passes the Phase A validator; deterministic when `generated_at`/`draw_reference` injected.

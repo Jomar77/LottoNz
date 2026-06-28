@@ -13,6 +13,7 @@ output contract and ``new-algo.md`` for the analytical framework.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -500,3 +501,83 @@ def generate_prediction_sets(
     ]
 
     return sets[:num_sets]
+
+
+# ---------------------------------------------------------------------------
+# B14 — Output formatter (maps internal dict -> contract-compliant document)
+# ---------------------------------------------------------------------------
+_RATIONALES: dict[str, str] = {
+    "burst_volatility": (
+        "Numbers with high coefficient of variation across quarterly draws — appearing "
+        "in tight clusters then going quiet. Historically bursty; each draw is still independent."
+    ),
+    "mean_reversion": (
+        "Numbers drawn below their long-run expected frequency. "
+        "There is no statistical 'due' effect — each draw is independent."
+    ),
+    "momentum_carry": (
+        "Numbers recurring most often within the recent 30-draw window. "
+        "A pattern in past noise, not a forecast of what comes next."
+    ),
+    "balanced_hybrid": (
+        "A balanced mix of frequently, rarely and averagely drawn numbers. "
+        "Provided as a themed alternative to a random quick-pick."
+    ),
+    "lean_bias": (
+        "Numbers from the side of the range (1-20 or 21-40) most represented in "
+        "the recent year of draws. Positional lean carries no predictive weight."
+    ),
+}
+
+
+def format_output(
+    sets: list[dict],
+    df: pd.DataFrame,
+    draw_reference: int | None = None,
+    generated_at: str | None = None,
+) -> dict:
+    """Map internal pipeline output to the contract-compliant predictions document.
+
+    ``generated_at`` defaults to the current UTC time (injectable for stable tests).
+    ``draw_reference`` defaults to ``len(df) + 1`` (sequence index, not an official number).
+    """
+    if generated_at is None:
+        generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    if draw_reference is None:
+        draw_reference = len(df) + 1
+
+    total = len(df)
+    date_min = df["date"].min().strftime("%Y-%m-%d")
+    date_max = df["date"].max().strftime("%Y-%m-%d")
+
+    all_freqs = calculate_frequencies(df)
+    expected_main = total * NUMBERS_PER_DRAW / MAIN_MAX
+    p_main = uniformity_pvalue(all_freqs, expected_main)
+
+    pb_freqs = _pb_frequencies(df)
+    expected_pb = total / POWERBALL_MAX
+    p_pb = uniformity_pvalue(pb_freqs, expected_pb)
+
+    output_sets = [
+        {
+            "id": i + 1,
+            "strategy": s["strategy"],
+            "main_numbers": s["main"],
+            "powerball": s["pb"],
+            "rationale": _RATIONALES.get(s["strategy"], s["strategy"]),
+        }
+        for i, s in enumerate(sets)
+    ]
+
+    return {
+        "draw_reference": draw_reference,
+        "generated_at": generated_at,
+        "sets": output_sets,
+        "metadata": {
+            "total_draws_analyzed": total,
+            "date_range": f"{date_min} to {date_max}",
+            "uniformity_confirmed": bool(test_uniformity(all_freqs, expected_main)),
+            "chi_square_p_main": round(p_main, 6),
+            "chi_square_p_powerball": round(p_pb, 6),
+        },
+    }

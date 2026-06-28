@@ -473,3 +473,41 @@ def test_pipeline_applies_avoid_duplicates():
     for s in sets:
         overlap = len(set(s["main"]) & recent)
         assert overlap <= 2
+
+
+# --- B14: output formatter ------------------------------------------------
+
+def test_format_output_schema():
+    from src.core.predictions_schema import validate_predictions_document
+
+    df = pe.to_dataframe(pe.load_draws())
+    sets = pe.generate_prediction_sets(df, seed=1)
+    doc = pe.format_output(
+        sets,
+        df,
+        draw_reference=1875,
+        generated_at="2026-05-09T08:00:00Z",
+    )
+    errors = validate_predictions_document(doc)
+    assert errors == [], errors
+
+
+def test_format_output_metadata():
+    df = pe.to_dataframe(pe.load_draws())
+    sets = pe.generate_prediction_sets(df, seed=1)
+    doc = pe.format_output(sets, df, generated_at="2026-05-09T08:00:00Z")
+    meta = doc["metadata"]
+    assert isinstance(meta["total_draws_analyzed"], int)
+    assert meta["total_draws_analyzed"] == len(df)
+    assert "to" in meta["date_range"]
+    assert isinstance(meta["uniformity_confirmed"], bool)
+    assert 0.0 <= meta["chi_square_p_main"] <= 1.0
+    assert 0.0 <= meta["chi_square_p_powerball"] <= 1.0
+
+
+def test_generated_at_injectable():
+    df = pe.to_dataframe(pe.load_draws())
+    sets = pe.generate_prediction_sets(df, seed=1)
+    ts = "2025-12-31T23:59:59Z"
+    doc = pe.format_output(sets, df, generated_at=ts)
+    assert doc["generated_at"] == ts
