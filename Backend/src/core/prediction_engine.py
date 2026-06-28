@@ -581,3 +581,18 @@ def format_output(
             "chi_square_p_powerball": round(p_pb, 6),
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# B15 — Output validation (thin delegate to Phase A validator)
+# ---------------------------------------------------------------------------
+def validate_output(doc: dict) -> list[str]:
+    """Validate a formatted predictions document against the Phase A contract.
+
+    Returns a list of error strings; empty list == valid.
+    Delegates to ``validate_predictions_document`` from Phase A so the two never
+    diverge.
+    """
+    from src.core.predictions_schema import validate_predictions_document
+
+    return validate_predictions_document(doc)

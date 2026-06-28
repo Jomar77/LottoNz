@@ -125,7 +125,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `format_output(sets, df, draw_reference=None, generated_at=None) -> dict`; `generated_at` defaults to `datetime.now(UTC)` ISO-Z but injectable; per-strategy `rationale` strings; map internal `main/pb` → output `main_numbers/powerball`; `id` 1-based.
   - Acceptance: emitted dict passes the Phase A validator; deterministic when `generated_at`/`draw_reference` injected.
 
-- [ ] **B15. Output validation `validate_output`**
+- [x] **B15. Output validation `validate_output`**
   - Tests first: `test_validate_output_clean` (well-formed → `[]`), `test_validate_output_catches_errors` (wrong main count, out-of-range main, duplicate mains, out-of-range PB, unsorted mains → one error string each).
   - Implement: `validate_output(sets) -> list[str]` per new-algo.md §Testing. Reuse / delegate to Phase A `validate_predictions_document` for the formatted-document check; keep a thin set-level adapter if validating internal `{main, pb}`.
   - Acceptance: empty list for valid input, one descriptive error per violation otherwise.

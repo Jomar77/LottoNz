@@ -511,3 +511,45 @@ def test_generated_at_injectable():
     ts = "2025-12-31T23:59:59Z"
     doc = pe.format_output(sets, df, generated_at=ts)
     assert doc["generated_at"] == ts
+
+
+# --- B15: validate_output -------------------------------------------------
+
+def test_validate_output_clean():
+    df = pe.to_dataframe(pe.load_draws())
+    sets = pe.generate_prediction_sets(df, seed=1)
+    doc = pe.format_output(sets, df, generated_at="2026-05-09T08:00:00Z")
+    assert pe.validate_output(doc) == []
+
+
+def test_validate_output_catches_errors():
+    import copy
+
+    df = pe.to_dataframe(pe.load_draws())
+    sets = pe.generate_prediction_sets(df, seed=1)
+    doc = pe.format_output(sets, df, generated_at="2026-05-09T08:00:00Z")
+
+    # Wrong main count
+    bad = copy.deepcopy(doc)
+    bad["sets"][0]["main_numbers"] = [1, 2, 3, 4, 5]
+    assert pe.validate_output(bad) != []
+
+    # Out-of-range main
+    bad = copy.deepcopy(doc)
+    bad["sets"][0]["main_numbers"] = [0, 2, 3, 4, 5, 6]
+    assert pe.validate_output(bad) != []
+
+    # Duplicate mains
+    bad = copy.deepcopy(doc)
+    bad["sets"][0]["main_numbers"] = [1, 1, 3, 4, 5, 6]
+    assert pe.validate_output(bad) != []
+
+    # Out-of-range PB
+    bad = copy.deepcopy(doc)
+    bad["sets"][0]["powerball"] = 11
+    assert pe.validate_output(bad) != []
+
+    # Unsorted mains
+    bad = copy.deepcopy(doc)
+    bad["sets"][0]["main_numbers"] = list(reversed(doc["sets"][0]["main_numbers"]))
+    assert pe.validate_output(bad) != []
