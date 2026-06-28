@@ -553,3 +553,31 @@ def test_validate_output_catches_errors():
     bad = copy.deepcopy(doc)
     bad["sets"][0]["main_numbers"] = list(reversed(doc["sets"][0]["main_numbers"]))
     assert pe.validate_output(bad) != []
+
+
+# --- B16: engine entry point ----------------------------------------------
+
+def test_run_writes_predictions_json(tmp_path):
+    src_data = pe.DATA_PATH  # real results.json
+    out = tmp_path / "predictions.json"
+    pe.generate_predictions_file(
+        input_path=src_data,
+        output_path=out,
+        seed=1,
+        generated_at="2026-05-09T08:00:00Z",
+    )
+    assert out.exists()
+    import json
+
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert pe.validate_output(doc) == []
+
+
+def test_run_is_deterministic_with_seed(tmp_path):
+    src_data = pe.DATA_PATH
+    ts = "2026-05-09T08:00:00Z"
+    out1 = tmp_path / "a.json"
+    out2 = tmp_path / "b.json"
+    pe.generate_predictions_file(src_data, out1, seed=42, generated_at=ts)
+    pe.generate_predictions_file(src_data, out2, seed=42, generated_at=ts)
+    assert out1.read_bytes() == out2.read_bytes()

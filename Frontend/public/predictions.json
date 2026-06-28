@@ -1,0 +1,83 @@
+{
+  "draw_reference": 1875,
+  "generated_at": "2026-06-28T00:00:00Z",
+  "sets": [
+    {
+      "id": 1,
+      "strategy": "burst_volatility",
+      "main_numbers": [
+        5,
+        6,
+        11,
+        20,
+        22,
+        28
+      ],
+      "powerball": 2,
+      "rationale": "Numbers with high coefficient of variation across quarterly draws — appearing in tight clusters then going quiet. Historically bursty; each draw is still independent."
+    },
+    {
+      "id": 2,
+      "strategy": "mean_reversion",
+      "main_numbers": [
+        5,
+        7,
+        8,
+        34,
+        37,
+        39
+      ],
+      "powerball": 9,
+      "rationale": "Numbers drawn below their long-run expected frequency. There is no statistical 'due' effect — each draw is independent."
+    },
+    {
+      "id": 3,
+      "strategy": "momentum_carry",
+      "main_numbers": [
+        2,
+        5,
+        6,
+        8,
+        9,
+        14
+      ],
+      "powerball": 1,
+      "rationale": "Numbers recurring most often within the recent 30-draw window. A pattern in past noise, not a forecast of what comes next."
+    },
+    {
+      "id": 4,
+      "strategy": "balanced_hybrid",
+      "main_numbers": [
+        2,
+        6,
+        10,
+        14,
+        19,
+        27
+      ],
+      "powerball": 8,
+      "rationale": "A balanced mix of frequently, rarely and averagely drawn numbers. Provided as a themed alternative to a random quick-pick."
+    },
+    {
+      "id": 5,
+      "strategy": "lean_bias",
+      "main_numbers": [
+        2,
+        5,
+        27,
+        28,
+        32,
+        33
+      ],
+      "powerball": 5,
+      "rationale": "Numbers from the side of the range (1-20 or 21-40) most represented in the recent year of draws. Positional lean carries no predictive weight."
+    }
+  ],
+  "metadata": {
+    "total_draws_analyzed": 1874,
+    "date_range": "2001-02-17 to 2026-05-09",
+    "uniformity_confirmed": true,
+    "chi_square_p_main": 0.780884,
+    "chi_square_p_powerball": 4e-05
+  }
+}

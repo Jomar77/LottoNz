@@ -130,7 +130,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `validate_output(sets) -> list[str]` per new-algo.md §Testing. Reuse / delegate to Phase A `validate_predictions_document` for the formatted-document check; keep a thin set-level adapter if validating internal `{main, pb}`.
   - Acceptance: empty list for valid input, one descriptive error per violation otherwise.
 
-- [ ] **B16. Engine entry point — write `predictions.json`**
+- [x] **B16. Engine entry point — write `predictions.json`**
   - Tests first: `test_run_writes_predictions_json` (run against a fixture file into a tmp path → file exists, parses, passes `validate_predictions_document`), `test_run_is_deterministic_with_seed` (same seed + injected timestamp → byte-identical file).
   - Implement: public entry `generate_predictions_file(input_path=DATA_PATH, output_path=OUTPUT_PATH, seed=None, generated_at=None, draw_reference=None)` orchestrating load → `to_dataframe` → `generate_prediction_sets` → `format_output` → validate (raise/log if non-empty) → write JSON (`indent=2, ensure_ascii=False`). Add a `__main__`/CLI guard mirroring `decay_generator.py` arg style (`--seed`, `--num-sets`).
   - Acceptance: running the module produces a valid `frontend/public/predictions.json`; full `cd backend && python -m pytest tests/ -v` green.

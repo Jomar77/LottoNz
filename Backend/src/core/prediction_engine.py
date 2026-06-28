@@ -596,3 +596,48 @@ def validate_output(doc: dict) -> list[str]:
     from src.core.predictions_schema import validate_predictions_document
 
     return validate_predictions_document(doc)
+
+
+# ---------------------------------------------------------------------------
+# B16 — Engine entry point
+# ---------------------------------------------------------------------------
+def generate_predictions_file(
+    input_path: Path | str = DATA_PATH,
+    output_path: Path | str = OUTPUT_PATH,
+    seed=None,
+    generated_at: str | None = None,
+    draw_reference: int | None = None,
+) -> None:
+    """Full pipeline: load -> to_dataframe -> generate -> format -> validate -> write.
+
+    Raises ``ValueError`` if the document fails the contract validator so callers
+    can detect bad output before it reaches the frontend.
+    """
+    draws = load_draws(input_path)
+    df = to_dataframe(draws)
+    sets = generate_prediction_sets(df, seed=seed)
+    doc = format_output(df=df, sets=sets, generated_at=generated_at, draw_reference=draw_reference)
+    errors = validate_output(doc)
+    if errors:
+        raise ValueError(f"Generated document is invalid: {errors}")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate predictions.json from results.json")
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--num-sets", type=int, default=5)
+    parser.add_argument("--input", type=Path, default=DATA_PATH)
+    parser.add_argument("--output", type=Path, default=OUTPUT_PATH)
+    args = parser.parse_args()
+
+    generate_predictions_file(
+        input_path=args.input,
+        output_path=args.output,
+        seed=args.seed,
+    )
+    print(f"Written: {args.output}")
