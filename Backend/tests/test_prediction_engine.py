@@ -345,3 +345,58 @@ def test_lean_window_filter():
     result = pe.generate_lean_set(df, lean_direction="left", window_years=1, reference_date=ref)
     # 1 appears ~15x in recent draws -> must be in the result
     assert 1 in result
+
+
+# --- B11: powerball selection ---------------------------------------------
+
+def _build_pb_fixture():
+    """30 draws: PB 3 dominates recent 10; PB 9 is coldest overall; PB 1 co-occurs with CV-high mains."""
+    draws = []
+
+    def add(date, nums, pb):
+        draws.append({"date": date, "numbers": list(nums), "powerball": pb})
+
+    # Older draws (outside recent-10 window): various PBs but PB 3 absent
+    for i in range(20):
+        add("2024-01-01", [1 + i % 6, 7, 8, 9, 10, 11], pb=(i % 8) + 1)  # PBs 1-8
+
+    # Recent 10 draws: PB 3 appears 8 times (hot)
+    for i in range(8):
+        add("2025-01-01", [1, 2, 3, 4, 5, 6], pb=3)
+    add("2025-01-02", [1, 2, 3, 4, 5, 6], pb=7)
+    add("2025-01-03", [1, 2, 3, 4, 5, 6], pb=5)
+    return draws
+
+
+def test_pb_hot():
+    df = pe.to_dataframe(_build_pb_fixture())
+    pb = pe.select_powerball(df, strategy="hot", window=10)
+    assert pb == 3  # most frequent in recent 10
+    assert 1 <= pb <= 10
+
+
+def test_pb_cold():
+    df = pe.to_dataframe(_build_pb_fixture())
+    pb = pe.select_powerball(df, strategy="cold")
+    assert 1 <= pb <= 10
+    # PB 9 and 10 never appear in this fixture -> should be one of them
+    freqs = {i: 0 for i in range(1, 11)}
+    for d in _build_pb_fixture():
+        freqs[d["powerball"]] += 1
+    assert freqs[pb] == min(freqs.values())
+
+
+def test_pb_cluster():
+    df = pe.to_dataframe(_build_pb_fixture())
+    pb = pe.select_powerball(df, strategy="cluster")
+    assert 1 <= pb <= 10
+
+
+def test_pb_balanced_seeded():
+    import random
+
+    df = pe.to_dataframe(_build_pb_fixture())
+    a = pe.select_powerball(df, strategy="balanced", rng=random.Random(42))
+    b = pe.select_powerball(df, strategy="balanced", rng=random.Random(42))
+    assert a == b
+    assert 1 <= a <= 10

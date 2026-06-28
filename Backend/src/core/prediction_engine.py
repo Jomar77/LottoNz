@@ -315,3 +315,76 @@ def generate_lean_set(
     freqs = calculate_frequencies(recent)
     by_freq_desc = sorted(target_nums, key=lambda n: (-freqs[n], n))
     return sorted(by_freq_desc[:6])
+
+
+# ---------------------------------------------------------------------------
+# B11 — Powerball selection (hot/cold/cluster/balanced, seeded)
+# ---------------------------------------------------------------------------
+def _pb_frequencies(df: pd.DataFrame) -> dict[int, int]:
+    """Zero-filled powerball frequency over all 10 possible values (1..10)."""
+    freqs = {i: 0 for i in range(POWERBALL_MIN, POWERBALL_MAX + 1)}
+    for pb in df["powerball"]:
+        freqs[int(pb)] += 1
+    return freqs
+
+
+def get_high_cv_numbers(df: pd.DataFrame, top_n: int = 10) -> list[int]:
+    """Top-``top_n`` main numbers by quarterly-frequency CV (high = 'bursty')."""
+    quarterly = calculate_quarterly_frequencies(df)
+    by_cv = sorted(quarterly, key=lambda n: calculate_cv(quarterly[n]), reverse=True)
+    return by_cv[:top_n]
+
+
+def calculate_pb_cooccurrence(df: pd.DataFrame, high_cv_nums: list[int]) -> dict[int, int]:
+    """Count how often each PB co-occurs with any of ``high_cv_nums``."""
+    counts = {i: 0 for i in range(POWERBALL_MIN, POWERBALL_MAX + 1)}
+    for _, row in df.iterrows():
+        if any(n in high_cv_nums for n in row["numbers"]):
+            counts[int(row["powerball"])] += 1
+    return counts
+
+
+def select_powerball(
+    df: pd.DataFrame,
+    strategy: str = "balanced",
+    rng=None,
+    window: int = 30,
+) -> int:
+    """Select a powerball (1-10) using the given strategy.
+
+    ``strategy`` is one of:
+    - ``"hot"``: most frequent in recent ``window`` draws (not overall, per contract).
+    - ``"cold"``: least frequent overall (zero-filled so never-appeared PBs are eligible).
+    - ``"cluster"``: PB most co-occurring with high-CV main numbers.
+    - ``"balanced"``: weighted-random by overall frequency; requires injected ``rng``
+      (``random.Random``) for reproducibility.
+    """
+    if strategy == "hot":
+        recent = df.tail(window)
+        freqs = _pb_frequencies(recent)
+        return max(freqs, key=lambda pb: (freqs[pb], -pb))
+
+    if strategy == "cold":
+        freqs = _pb_frequencies(df)
+        return min(freqs, key=lambda pb: (freqs[pb], pb))
+
+    if strategy == "cluster":
+        high_cv = get_high_cv_numbers(df)
+        cooc = calculate_pb_cooccurrence(df, high_cv)
+        return max(cooc, key=lambda pb: (cooc[pb], -pb))
+
+    # "balanced": weighted random by overall frequency
+    freqs = _pb_frequencies(df)
+    population = list(freqs.keys())
+    weights = [freqs[pb] + 1 for pb in population]  # +1 so zero-count PBs still eligible
+    total = sum(weights)
+    cumulative = []
+    running = 0.0
+    for w in weights:
+        running += w / total
+        cumulative.append(running)
+    r = (rng or __import__("random")).random()
+    for pb, threshold in zip(population, cumulative):
+        if r <= threshold:
+            return pb
+    return population[-1]

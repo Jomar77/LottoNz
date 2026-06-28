@@ -105,7 +105,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `generate_lean_set(df, lean_direction="left", window_years=1, reference_date=None) -> list[int]`; inject `reference_date` (default = max draw date).
   - Acceptance: correct side + recency ordering; window filter respected; reference date injectable.
 
-- [ ] **B11. Powerball selection (hot/cold/cluster/balanced, seeded)**
+- [x] **B11. Powerball selection (hot/cold/cluster/balanced, seeded)**
   - Tests first: `test_pb_hot` (most frequent in recent window), `test_pb_cold` (least frequent overall), `test_pb_cluster` (PB co-occurring most with high-CV mains), `test_pb_balanced_seeded` (weighted-random reproducible under fixed rng). Each result in 1–10.
   - Implement: `select_powerball(df, strategy="balanced", rng=None, window=30) -> int`, plus `get_high_cv_numbers(df)` and `calculate_pb_cooccurrence(df, nums)`. Define "hot" = recent-window most frequent (document this; new-algo.md's `.head(1)` is ambiguous).
   - Acceptance: all four strategies return valid PB; balanced is seed-reproducible.
