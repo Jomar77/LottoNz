@@ -185,9 +185,10 @@ def test_get_recent_numbers():
 def test_burst_set_size_and_range():
     df = pe.to_dataframe(_build_burst_fixture())
     result = pe.generate_burst_set(df)
-    assert len(result) <= 6
-    assert len(set(result)) == len(result)
+    assert len(result) == 6  # contract: always exactly 6
+    assert len(set(result)) == 6
     assert all(1 <= n <= 40 for n in result)
+    assert result == sorted(result)  # must be sorted ascending
 
 
 def test_burst_prefers_high_cv_recent():
@@ -271,3 +272,28 @@ def test_momentum_window_only():
     df = pe.to_dataframe(_build_momentum_fixture())
     result = pe.generate_momentum_set(df, window=30, min_freq=8)
     assert 40 not in result  # hot only outside the window
+
+
+# --- B9: balanced hybrid set (seeded) -------------------------------------
+
+def test_hybrid_is_seeded_reproducible():
+    import random
+
+    df = pe.to_dataframe(_build_regression_fixture())
+    a = pe.generate_hybrid_set(df, random.Random(42))
+    b = pe.generate_hybrid_set(df, random.Random(42))
+    assert a == b
+    # different seed should (very likely) differ in at least the random fills
+    c = pe.generate_hybrid_set(df, random.Random(7))
+    assert isinstance(c, list)
+
+
+def test_hybrid_composition():
+    import random
+
+    df = pe.to_dataframe(_build_regression_fixture())
+    result = pe.generate_hybrid_set(df, random.Random(1))
+    assert len(result) == 6
+    assert len(set(result)) == 6
+    assert result == sorted(result)
+    assert all(1 <= n <= 40 for n in result)

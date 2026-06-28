@@ -178,21 +178,44 @@ def get_recent_numbers(df: pd.DataFrame, last_n_draws: int) -> set[int]:
     return {int(n) for nums in recent["numbers"] for n in nums}
 
 
+def _pad_to_n(selected: list[int], n: int, by_cv: list[int] | None = None) -> list[int]:
+    """Pad ``selected`` to exactly ``n`` unique numbers by adding from fallback ordering.
+
+    Fallback priority: ``by_cv`` (descending-CV order) then sequential 1..40.
+    Contract: always returns ``n`` unique sorted ints in 1..40.
+    """
+    pool = by_cv or []
+    remaining = [x for x in pool if x not in selected] + [
+        x for x in range(MAIN_MIN, MAIN_MAX + 1) if x not in selected and x not in pool
+    ]
+    result = list(selected)
+    for x in remaining:
+        if len(result) >= n:
+            break
+        if x not in result:
+            result.append(x)
+    return sorted(result[:n])
+
+
 # ---------------------------------------------------------------------------
 # B6 — Strategy 1: Burst Volatility set
 # ---------------------------------------------------------------------------
 def generate_burst_set(df: pd.DataFrame, top_n: int = 6, recent_window: int = 30) -> list[int]:
     """High-CV (bursty) numbers that also appear in the recent window.
 
-    Rank numbers by coefficient of variation of their quarterly frequencies, take
-    the top ``top_n * 2`` candidates, then keep only those drawn in the last
-    ``recent_window`` draws (recency boost), returning up to ``top_n``.
+    Rank numbers by quarterly-frequency CV, take top ``top_n * 2`` candidates,
+    filter to those drawn in the last ``recent_window`` draws. Always returns
+    exactly ``top_n`` numbers (padded from the CV-ranked pool if needed).
     """
     quarterly = calculate_quarterly_frequencies(df)
     cv_scores = {num: calculate_cv(freqs) for num, freqs in quarterly.items()}
-    candidates = sorted(cv_scores.items(), key=lambda kv: kv[1], reverse=True)[: top_n * 2]
+    by_cv_desc = [num for num, _ in sorted(cv_scores.items(), key=lambda kv: kv[1], reverse=True)]
+    candidates = by_cv_desc[: top_n * 2]
     recent = get_recent_numbers(df, recent_window)
-    return [num for num, _ in candidates if num in recent][:top_n]
+    result = [num for num in candidates if num in recent][:top_n]
+    if len(result) < top_n:
+        return _pad_to_n(result, top_n, by_cv=by_cv_desc)
+    return sorted(result)
 
 
 # ---------------------------------------------------------------------------
@@ -237,3 +260,31 @@ def generate_momentum_set(df: pd.DataFrame, window: int = 30, min_freq: int = 8)
     if len(hot) >= 6:
         return hot[:6]
     return by_freq_desc[:6]
+
+
+# ---------------------------------------------------------------------------
+# B9 — Strategy 4: Balanced Hybrid set (seeded)
+# ---------------------------------------------------------------------------
+def generate_hybrid_set(df: pd.DataFrame, rng) -> list[int]:
+    """A balanced mix: 2 hot + 2 cold + 2 neutral numbers, filled to 6, sorted.
+
+    ``rng`` is an injected ``random.Random`` so the result is reproducible under a
+    fixed seed (new-algo.md used bare ``random.*`` — replaced with injected RNG).
+    """
+    freqs = calculate_frequencies(df)
+    mean_freq = float(np.mean(list(freqs.values())))
+
+    hot = sorted(n for n, f in freqs.items() if f > mean_freq * 1.05)
+    cold = sorted(n for n, f in freqs.items() if f < mean_freq * 0.95)
+    neutral = sorted(n for n, f in freqs.items() if mean_freq * 0.95 <= f <= mean_freq * 1.05)
+
+    result: list[int] = []
+    result.extend(rng.sample(hot, min(2, len(hot))))
+    result.extend(rng.sample(cold, min(2, len(cold))))
+    result.extend(rng.sample(neutral, min(2, len(neutral))))
+
+    while len(result) < 6:
+        remaining = [n for n in range(MAIN_MIN, MAIN_MAX + 1) if n not in result]
+        result.append(rng.choice(remaining))
+
+    return sorted(result)

@@ -95,7 +95,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `generate_momentum_set(df, window=30, min_freq=8) -> list[int]` using `df.tail(window)`, with a documented top-up fallback when fewer than 6 clear `min_freq`.
   - Acceptance: window-scoped hot selection verified; freq-descending order.
 
-- [ ] **B9. Strategy 4 — Balanced Hybrid set (seeded)**
+- [x] **B9. Strategy 4 — Balanced Hybrid set (seeded)**
   - Tests first: `test_hybrid_is_seeded_reproducible` (same seed → identical output), `test_hybrid_composition` (exactly 6 sorted unique ints in 1–40 from hot/cold/neutral buckets).
   - Implement: `generate_hybrid_set(df, rng) -> list[int]` — inject `rng` instead of bare `random.*`; 2 hot + 2 cold + 2 neutral, fill remainder, return `sorted`.
   - Acceptance: deterministic under a fixed seed; always 6 sorted unique valid numbers.
