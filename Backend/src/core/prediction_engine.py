@@ -431,3 +431,72 @@ def avoid_duplicates(
             replace_count -= 1
 
     return sorted(result)
+
+
+# ---------------------------------------------------------------------------
+# B13 — Full pipeline: generate_prediction_sets (5 sets, seeded, deterministic)
+# ---------------------------------------------------------------------------
+def generate_prediction_sets(
+    df: pd.DataFrame,
+    num_sets: int = 5,
+    exclude_recent_draws: int = 5,
+    seed=None,
+) -> list[dict]:
+    """Generate ``num_sets`` strategically distinct prediction sets.
+
+    PB strategy per set (per contract):
+      burst_volatility  -> cluster
+      mean_reversion    -> cold
+      momentum_carry    -> hot
+      balanced_hybrid   -> balanced (seeded)
+      lean_bias         -> balanced (seeded)
+
+    One ``random.Random`` instance is seeded once and threaded in a fixed call
+    order through all randomised steps (hybrid set, both balanced PBs) so the
+    same seed always produces byte-identical output.
+    """
+    import random as _random
+
+    rng = _random.Random(seed)
+    recent = get_recent_numbers(df, exclude_recent_draws)
+
+    lean_dir = classify_lean(
+        [n for nums in df.tail(30)["numbers"] for n in nums]
+    )
+
+    # Fixed call order for rng consumption (must not change without bumping the API).
+    burst_main = avoid_duplicates(generate_burst_set(df), recent)
+    regression_main = avoid_duplicates(generate_regression_set(df), recent)
+    momentum_main = avoid_duplicates(generate_momentum_set(df), recent)
+    hybrid_main = avoid_duplicates(generate_hybrid_set(df, rng), recent)
+    lean_main = avoid_duplicates(generate_lean_set(df, lean_direction=lean_dir), recent)
+
+    sets = [
+        {
+            "main": burst_main,
+            "pb": select_powerball(df, strategy="cluster"),
+            "strategy": "burst_volatility",
+        },
+        {
+            "main": regression_main,
+            "pb": select_powerball(df, strategy="cold"),
+            "strategy": "mean_reversion",
+        },
+        {
+            "main": momentum_main,
+            "pb": select_powerball(df, strategy="hot"),
+            "strategy": "momentum_carry",
+        },
+        {
+            "main": hybrid_main,
+            "pb": select_powerball(df, strategy="balanced", rng=rng),
+            "strategy": "balanced_hybrid",
+        },
+        {
+            "main": lean_main,
+            "pb": select_powerball(df, strategy="balanced", rng=rng),
+            "strategy": "lean_bias",
+        },
+    ]
+
+    return sets[:num_sets]

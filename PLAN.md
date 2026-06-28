@@ -115,7 +115,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `avoid_duplicates(candidate_nums, recent_numbers, max_overlap=2) -> list[int]`, hardened so it never returns <6 or duplicates.
   - Acceptance: all three pass; output always 6 unique sorted in 1–40.
 
-- [ ] **B13. Full pipeline `generate_prediction_sets` (5 sets, seeded, deterministic)**
+- [x] **B13. Full pipeline `generate_prediction_sets` (5 sets, seeded, deterministic)**
   - Tests first: `test_generate_sets_count_and_strategies` (default `num_sets=5` → 5 sets tagged `burst_volatility`, `mean_reversion`, `momentum_carry`, `balanced_hybrid`, `lean_bias`, each `{main, pb, strategy}`), `test_pipeline_deterministic` (same seed → identical sets), `test_pipeline_applies_avoid_duplicates` (no set overlaps the last `exclude_recent_draws` draws beyond `max_overlap`).
   - Implement: `generate_prediction_sets(df, num_sets=5, exclude_recent_draws=5, seed=None) -> list[dict]` wiring B6–B12, threading one seeded rng to all randomized steps, using `get_recent_numbers(df, exclude_recent_draws)` for avoidance. Powerball strategy per set: burst→cluster, mean_reversion→cold, momentum→hot, balanced_hybrid→balanced, lean_bias→balanced.
   - Acceptance: returns the 5 strategy-tagged sets; fully reproducible under a seed.

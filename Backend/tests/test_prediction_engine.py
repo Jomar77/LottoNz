@@ -431,3 +431,45 @@ def test_avoid_duplicates_preserves_count():
     assert len(set(result)) == 6
     assert all(1 <= n <= 40 for n in result)
     assert result == sorted(result)
+
+
+# --- B13: full pipeline ---------------------------------------------------
+
+EXPECTED_STRATEGIES = [
+    "burst_volatility",
+    "mean_reversion",
+    "momentum_carry",
+    "balanced_hybrid",
+    "lean_bias",
+]
+
+
+def test_generate_sets_count_and_strategies():
+    df = pe.to_dataframe(pe.load_draws())  # real data
+    sets = pe.generate_prediction_sets(df, num_sets=5, seed=42)
+    assert len(sets) == 5
+    strategies = [s["strategy"] for s in sets]
+    assert strategies == EXPECTED_STRATEGIES
+    for s in sets:
+        assert "main" in s and "pb" in s
+        assert len(s["main"]) == 6
+        assert len(set(s["main"])) == 6
+        assert s["main"] == sorted(s["main"])
+        assert all(1 <= n <= 40 for n in s["main"])
+        assert 1 <= s["pb"] <= 10
+
+
+def test_pipeline_deterministic():
+    df = pe.to_dataframe(pe.load_draws())
+    a = pe.generate_prediction_sets(df, seed=99)
+    b = pe.generate_prediction_sets(df, seed=99)
+    assert a == b
+
+
+def test_pipeline_applies_avoid_duplicates():
+    df = pe.to_dataframe(pe.load_draws())
+    sets = pe.generate_prediction_sets(df, exclude_recent_draws=5, seed=7)
+    recent = pe.get_recent_numbers(df, 5)
+    for s in sets:
+        overlap = len(set(s["main"]) & recent)
+        assert overlap <= 2
