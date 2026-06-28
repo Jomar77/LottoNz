@@ -110,7 +110,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `select_powerball(df, strategy="balanced", rng=None, window=30) -> int`, plus `get_high_cv_numbers(df)` and `calculate_pb_cooccurrence(df, nums)`. Define "hot" = recent-window most frequent (document this; new-algo.md's `.head(1)` is ambiguous).
   - Acceptance: all four strategies return valid PB; balanced is seed-reproducible.
 
-- [ ] **B12. Duplicate avoidance (`avoid_duplicates`)**
+- [x] **B12. Duplicate avoidance (`avoid_duplicates`)**
   - Tests first: `test_avoid_duplicates_passthrough` (overlap ≤ max_overlap → unchanged), `test_avoid_duplicates_replaces` (overlap > max_overlap → overlapping numbers swapped for non-recent alternatives), `test_avoid_duplicates_preserves_count` (always 6 distinct numbers).
   - Implement: `avoid_duplicates(candidate_nums, recent_numbers, max_overlap=2) -> list[int]`, hardened so it never returns <6 or duplicates.
   - Acceptance: all three pass; output always 6 unique sorted in 1–40.

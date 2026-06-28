@@ -388,3 +388,46 @@ def select_powerball(
         if r <= threshold:
             return pb
     return population[-1]
+
+
+# ---------------------------------------------------------------------------
+# B12 — Duplicate avoidance
+# ---------------------------------------------------------------------------
+def avoid_duplicates(
+    candidate_nums: list[int],
+    recent_numbers: set[int],
+    max_overlap: int = 2,
+) -> list[int]:
+    """Ensure the candidate set doesn't overlap recent draws more than ``max_overlap``.
+
+    Both branches return exactly 6 unique sorted ints in 1..40.
+    """
+    overlap = set(candidate_nums) & recent_numbers
+    if len(overlap) <= max_overlap:
+        return sorted(candidate_nums)
+
+    # Build replacement pool: prefer non-recent numbers not already in candidate.
+    available = [
+        n for n in range(MAIN_MIN, MAIN_MAX + 1)
+        if n not in recent_numbers and n not in candidate_nums
+    ]
+    # Fall back to recent numbers not already in candidate if pool is exhausted.
+    fallback = [
+        n for n in range(MAIN_MIN, MAIN_MAX + 1)
+        if n not in candidate_nums and n not in available
+    ]
+
+    result = list(candidate_nums)
+    replacement_pool = available + fallback
+
+    # Replace numbers that are in the overlap until within limit.
+    to_replace = [n for n in result if n in recent_numbers]
+    replace_count = len(to_replace) - max_overlap
+    for i, num in enumerate(result):
+        if replace_count <= 0:
+            break
+        if num in recent_numbers and replacement_pool:
+            result[i] = replacement_pool.pop(0)
+            replace_count -= 1
+
+    return sorted(result)

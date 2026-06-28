@@ -400,3 +400,34 @@ def test_pb_balanced_seeded():
     b = pe.select_powerball(df, strategy="balanced", rng=random.Random(42))
     assert a == b
     assert 1 <= a <= 10
+
+
+# --- B12: duplicate avoidance ---------------------------------------------
+
+def test_avoid_duplicates_passthrough():
+    recent = {1, 2, 3}
+    candidate = [4, 5, 6, 10, 20, 30]
+    result = pe.avoid_duplicates(candidate, recent, max_overlap=2)
+    assert result == sorted(candidate)  # no excess overlap -> returned sorted
+
+
+def test_avoid_duplicates_replaces():
+    recent = {1, 2, 3, 4, 5, 6}
+    candidate = [1, 2, 3, 4, 5, 7]  # 5 overlap (> max_overlap=2) -> replace 3
+    result = pe.avoid_duplicates(candidate, recent, max_overlap=2)
+    overlap = len(set(result) & recent)
+    assert overlap <= 2
+    assert len(result) == 6
+    assert len(set(result)) == 6
+    assert result == sorted(result)
+
+
+def test_avoid_duplicates_preserves_count():
+    # Extreme: all of 1..39 are "recent" — only 40 is non-recent.
+    recent = set(range(1, 40))
+    candidate = [1, 2, 3, 4, 5, 6]  # 6 overlap
+    result = pe.avoid_duplicates(candidate, recent, max_overlap=2)
+    assert len(result) == 6
+    assert len(set(result)) == 6
+    assert all(1 <= n <= 40 for n in result)
+    assert result == sorted(result)
