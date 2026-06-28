@@ -167,7 +167,7 @@ function App() {
             LottoNz Smart Picker
             <Sparkles className="w-12 h-12 text-highlight-blue/60" />
           </h1>
-          <p className="text-white text-lg">Weighted number generation based on historical data</p>
+          <p className="text-white text-lg">Random quick-picks — 1,874 draws confirm every number is equally likely</p>
         </div>
 
         {/* Main layout: Lucky Tickets LEFT, content RIGHT on desktop */}
@@ -266,7 +266,7 @@ function App() {
                   {/* Label */}
                   <div className="px-5 py-3 bg-gray-50 flex-shrink-0">
                     <p className="text-xs font-semibold text-gray-500 text-center uppercase tracking-wider">
-                      {generatedList.length > 1 ? `${generatedList.length} Tickets` : 'Your Lucky Numbers'}
+                      {generatedList.length > 1 ? `${generatedList.length} Tickets` : 'Your Quick Pick'}
                     </p>
                   </div>
 
