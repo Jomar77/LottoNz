@@ -61,10 +61,27 @@ powerball distribution is NOT uniform. This is a real data finding, not a bug.
 `uniformity_confirmed` covers only the main numbers (as documented). The metadata
 field surfaces the raw PB p-value so the UI can decide how to present this.
 
-### Phase C — PAUSED (user decision)
-User chose to finish Phase B first and decide on framing (educational vs
-entertainment) before building the UI (Phase C). See teammate findings in
-SESSION_NOTES.md.
+---
+
+## Phase C — Frontend display (Lead)
+
+All C1–C6 complete. Frontend Vitest suite: 18 tests pass. `tsc --noEmit`, `npm run build` all green.
+
+### Items completed
+- C1: Vitest wired, bootstrap test green
+- C2: Phase A TS types reused without redefinition
+- C3: `fetchPredictions()` added to `dataService.ts`, 3 tests
+- C4: `validatePredictionSet`, `formatStrategyLabel`, `formatFallacyLabel`, `formatFallacyExplanation`, `orderPredictionSets` in `utils.ts`, 15 tests
+- C5: `PatternExplorer.tsx` — educational framing, 5 fallacy-labeled strategy cards (named Gambler's Fallacy, Hot-Hand Fallacy, Clustering Fallacy, Diversification Fallacy, Positional Bias Fallacy), uniformity hero stat, NZ gambling helpline footer. Wired into `App.tsx` via `useEffect` + state below the existing two-column layout.
+- C6: All three gate commands pass
+
+### Key decisions
+- Component named `PatternExplorer` (not `PredictedSets`) — "Pattern Explorer" is the section title; avoids predictive language
+- Educational framing: fallacy badge per card, explanation text that ends in "each draw is independent", no bounce animation
+- Hero stat: chi_square_p_main + total_draws_analyzed — the science result is foregrounded
+- `chi_square_p_powerball = 4e-05` (non-uniform): UniformityHero shows the conditional branch for non-uniform powerball without alarming language
+- Insertion point: full-width below both sticky columns, above mobile picker modal (line 493 in App.tsx)
+- No mock/stub for C5 — presentational only, verified via type-check + build
 
 ### Phase D — BLOCKED on one human decision
 The exec-explorer identified an ordering bug in D3:

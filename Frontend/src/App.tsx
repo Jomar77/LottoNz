@@ -1,8 +1,9 @@
 ﻿import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
 import { Search, Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
-import { fetchLotteryData } from './dataService';
+import { fetchLotteryData, fetchPredictions } from './dataService';
 import { findHistoricalMatch, generateNumbers } from './utils';
-import { LotteryResult, GenerationPreferences, GeneratedNumbers } from './types';
+import { LotteryResult, GenerationPreferences, GeneratedNumbers, PredictionsDocument } from './types';
+import { PatternExplorer } from './PatternExplorer';
 
 const ITEM_H = 48;
 const VISIBLE = 5;
@@ -11,6 +12,7 @@ function App() {
   const [data, setData] = useState<LotteryResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [predictions, setPredictions] = useState<PredictionsDocument | null>(null);
   const [generatedList, setGeneratedList] = useState<GeneratedNumbers[]>([]);
   const [bulkCount, setBulkCount] = useState(1);
   const [bulkInputStr, setBulkInputStr] = useState('1');
@@ -44,6 +46,10 @@ function App() {
       }
     }
     loadData();
+  }, []);
+
+  useEffect(() => {
+    fetchPredictions().then(setPredictions);
   }, []);
 
   useEffect(() => {
@@ -491,6 +497,8 @@ function App() {
           </div>
         </div>
       </div>
+
+      <PatternExplorer doc={predictions} />
 
       {/* iOS-style picker modal (mobile only) */}
       {showPickerModal && (

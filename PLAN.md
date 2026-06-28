@@ -163,12 +163,12 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: add `validatePredictionSet`, `formatStrategyLabel`, `orderPredictionSets` (pure, no DOM) to `frontend/src/utils.ts`.
   - Acceptance: all cases pass under `npx vitest run`; full suite green; `npx tsc --noEmit` passes.
 
-- [ ] **C5 — Render the strategy-cards section**
+- [x] **C5 — Render the strategy-cards section**
   - Verify (no unit test — purely presentational JSX; display logic is already unit-tested in C4): manual check in `npm run dev` + `npx tsc --noEmit` + `npm run build`.
   - Implement: Add single-file PascalCase component `frontend/src/PredictedSets.tsx` (Tailwind, lucide-react) taking `PredictionsDocument | null` and rendering one labeled card per set: strategy name via `formatStrategyLabel`, the `rationale`, the 6 `main_numbers` as circular badges, `powerball` as an accent badge — reusing existing badge styling from `App.tsx`. Include a responsible-play disclaimer once at the section footer and optionally surface `metadata` (e.g. `total_draws_analyzed`, `date_range`) as small print. Render nothing (or a subtle "predictions unavailable" note) when the prop is `null`; skip any set failing `validatePredictionSet`. Wire into `App.tsx`: `fetchPredictions()` in a `useEffect` into new state, place `<PredictedSets />` as an additive section without altering the existing layout.
   - Acceptance: cards appear for a sample `predictions.json` in `frontend/public/`; with no file present the existing app still loads/functions; `npx tsc --noEmit` and `npm run build` pass.
 
-- [ ] **C6 — Final gate: type-check, build, full test suite**
+- [x] **C6 — Final gate: type-check, build, full test suite**
   - Verify: run `npx tsc --noEmit`, `npm run build`, `npx vitest run` together; confirm existing results/generator features are visually unaffected in `npm run dev`.
   - Implement: fix any integration issues (imports, config) without touching unrelated files.
   - Acceptance: all three commands exit 0; no regression in existing functionality.
