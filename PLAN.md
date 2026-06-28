@@ -148,12 +148,12 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: Add `vitest` to `frontend/package.json` devDependencies; add a `"test": "vitest run"` script; add a minimal `test` block to `frontend/vite.config.ts` (`environment: 'node'`). No production code changes; Vitest must not enter the build.
   - Acceptance: `npx vitest run` exits 0; `npm run build` and `npx tsc --noEmit` still pass. New dep logged in STATUS.md.
 
-- [ ] **C2 — Confirm prediction types resolve (reuse Phase A types)**
+- [x] **C2 — Confirm prediction types resolve (reuse Phase A types)**
   - Tests first: No unit test (type-only). The C3/C4 tests import the types; a compile failure is the signal.
   - Implement: Use the `PredictionsDocument` / `PredictionSet` / `PredictionsMetadata` types created in Phase A (A1) in `frontend/src/types.ts`. Do NOT redefine them. Add only any small frontend-only view-model helpers if needed.
   - Acceptance: `npx tsc --noEmit` passes; C3/C4 import the Phase A types without error.
 
-- [ ] **C3 — Add `fetchPredictions()` to `frontend/src/dataService.ts` (graceful on missing/old file)**
+- [x] **C3 — Add `fetchPredictions()` to `frontend/src/dataService.ts` (graceful on missing/old file)**
   - Tests first: Add `frontend/src/dataService.test.ts` stubbing global `fetch`: (a) valid body resolves to the parsed `PredictionsDocument`; (b) 404 / `!response.ok` resolves to `null` (no throw); (c) invalid JSON resolves to `null`. Confirm failure first.
   - Implement: `export async function fetchPredictions(): Promise<PredictionsDocument | null>` fetching `/predictions.json`, mirroring `fetchLotteryData` style but returning `null` on non-ok/parse error (`console.error`, no throw). `fetchLotteryData` untouched.
   - Acceptance: all three cases pass under `npx vitest run`; `npx tsc --noEmit` passes.
