@@ -84,7 +84,7 @@ function StrategyCard({ set }: { set: PredictionSet }) {
             {num}
           </div>
         ))}
-        <div className="w-11 h-11 rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-amber-700 text-base font-bold ml-1">
+        <div className="w-11 h-11 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center text-gray-700 text-base font-bold ml-1">
           {set.powerball}
         </div>
       </div>
@@ -146,9 +146,10 @@ export function PatternExplorer({ doc }: PatternExplorerProps) {
           </p>
         </div>
         <p>
-          If gambling is causing you harm, free support is available 24/7:{' '}
-          <span className="text-white/70 font-medium">gamblinghelpline.co.nz</span> or call{' '}
-          <span className="text-white/70 font-medium">0800 654 655</span>. You must be 18+ to play NZ Lotto.
+          If gambling is causing you harm, free confidential support is available 24/7:{' '}
+          <a href="https://www.gamblinghelpline.co.nz" target="_blank" rel="noopener noreferrer" className="text-white/70 underline">gamblinghelpline.co.nz</a>{' '}
+          or call{' '}
+          <a href="tel:0800654655" className="text-white/70 underline">0800 654 655</a>. You must be 18+ to play NZ Lotto.
         </p>
         <p className="text-white/30">
           Generated {generatedDate} from {total_draws_analyzed.toLocaleString()} draws.
