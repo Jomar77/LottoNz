@@ -143,7 +143,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
 > from Phase A — does not need the real engine to exist. Additive: must not break the existing
 > generator/results UI.
 
-- [ ] **C1 — Wire Vitest as the frontend test runner**
+- [x] **C1 — Wire Vitest as the frontend test runner**
   - Tests first: Add `frontend/src/utils.test.ts` with a trivial passing assertion to prove the runner executes. Run `npx vitest run` and confirm discovery.
   - Implement: Add `vitest` to `frontend/package.json` devDependencies; add a `"test": "vitest run"` script; add a minimal `test` block to `frontend/vite.config.ts` (`environment: 'node'`). No production code changes; Vitest must not enter the build.
   - Acceptance: `npx vitest run` exits 0; `npm run build` and `npx tsc --noEmit` still pass. New dep logged in STATUS.md.
