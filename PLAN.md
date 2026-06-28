@@ -158,7 +158,7 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
   - Implement: `export async function fetchPredictions(): Promise<PredictionsDocument | null>` fetching `/predictions.json`, mirroring `fetchLotteryData` style but returning `null` on non-ok/parse error (`console.error`, no throw). `fetchLotteryData` untouched.
   - Acceptance: all three cases pass under `npx vitest run`; `npx tsc --noEmit` passes.
 
-- [ ] **C4 — Pure display helpers in `frontend/src/utils.ts` (TDD core)**
+- [x] **C4 — Pure display helpers in `frontend/src/utils.ts` (TDD core)**
   - Tests first: Extend `utils.test.ts`: (a) `validatePredictionSet(set)` true only for 6 unique sorted mains in 1–40 and powerball in 1–10 (table-driven failure cases); (b) `formatStrategyLabel('burst_volatility')` → `"Burst Volatility"` with a fallback for unknown strategies; (c) `orderPredictionSets(sets)` orders by `id` ascending and drops malformed sets. Confirm failures first.
   - Implement: add `validatePredictionSet`, `formatStrategyLabel`, `orderPredictionSets` (pure, no DOM) to `frontend/src/utils.ts`.
   - Acceptance: all cases pass under `npx vitest run`; full suite green; `npx tsc --noEmit` passes.

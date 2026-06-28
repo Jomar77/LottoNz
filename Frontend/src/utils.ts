@@ -1,4 +1,4 @@
-import { LotteryResult, GenerationPreferences, GeneratedNumbers } from './types';
+import { LotteryResult, GenerationPreferences, GeneratedNumbers, PredictionSet, PredictionStrategy } from './types';
 
 /**
  * Enhanced Randomness Utilities
@@ -176,4 +176,70 @@ export function generateNumbers(
     numbers: [4, 8, 15, 16, 23, 42],
     powerball: generatePowerball()
   };
+}
+
+// ---------------------------------------------------------------------------
+// C4 — Pure display helpers for the Pattern Explorer section
+// (No DOM references — safe in node test environment)
+// ---------------------------------------------------------------------------
+
+const STRATEGY_LABELS: Record<PredictionStrategy, string> = {
+  burst_volatility: 'Burst & Volatility',
+  mean_reversion: 'Mean Reversion',
+  momentum_carry: 'Momentum Carry-Over',
+  balanced_hybrid: 'Balanced Mix',
+  lean_bias: 'Left / Right Lean',
+};
+
+const FALLACY_LABELS: Record<PredictionStrategy, string> = {
+  burst_volatility: 'Clustering Fallacy',
+  mean_reversion: "Gambler's Fallacy",
+  momentum_carry: 'Hot-Hand Fallacy',
+  balanced_hybrid: 'Diversification Fallacy',
+  lean_bias: 'Positional Bias Fallacy',
+};
+
+const FALLACY_EXPLANATIONS: Record<PredictionStrategy, string> = {
+  burst_volatility:
+    'Clusters in past data look meaningful but are expected noise in a uniform draw. Historically bursty numbers have no higher chance of appearing next.',
+  mean_reversion:
+    "Cold numbers are not 'due.' The draw has no memory — past frequency has no effect on the next result.",
+  momentum_carry:
+    'Streaks in past draws do not continue. Each draw is fully independent; a number appearing often recently is no more likely to appear again.',
+  balanced_hybrid:
+    'Spreading picks across hot, cold, and neutral zones does not change the expected probability — every combination has identical odds.',
+  lean_bias:
+    'Left or right lean in past draws has no carry-over effect. The next draw selects randomly from the full 1–40 range regardless of recent positional patterns.',
+};
+
+function toTitleCase(str: string): string {
+  return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+export function formatStrategyLabel(strategy: string): string {
+  return STRATEGY_LABELS[strategy as PredictionStrategy] ?? toTitleCase(strategy);
+}
+
+export function formatFallacyLabel(strategy: string): string {
+  return FALLACY_LABELS[strategy as PredictionStrategy] ?? toTitleCase(strategy);
+}
+
+export function formatFallacyExplanation(strategy: string): string {
+  return FALLACY_EXPLANATIONS[strategy as PredictionStrategy] ?? '';
+}
+
+export function validatePredictionSet(set: PredictionSet): boolean {
+  const { main_numbers, powerball } = set;
+  if (!Array.isArray(main_numbers) || main_numbers.length !== 6) return false;
+  if (new Set(main_numbers).size !== 6) return false;
+  if (main_numbers.some(n => n < 1 || n > 40)) return false;
+  for (let i = 1; i < main_numbers.length; i++) {
+    if (main_numbers[i] <= main_numbers[i - 1]) return false;
+  }
+  if (powerball < 1 || powerball > 10) return false;
+  return true;
+}
+
+export function orderPredictionSets(sets: PredictionSet[]): PredictionSet[] {
+  return sets.filter(validatePredictionSet).sort((a, b) => a.id - b.id);
 }
