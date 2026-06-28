@@ -6,28 +6,52 @@
 <!-- ============================================================ -->
 
 ## Stack
-<!-- Example — replace with your actual stack:
-Runtime: Node.js 20, TypeScript (strict)
-Framework: Next.js 15 (App Router)
-Database: PostgreSQL via Prisma
-Package manager: pnpm
--->
+
+- **Backend**: Python 3.14, pandas, scipy, numpy — `backend/`
+- **Frontend**: React 18, TypeScript (strict), Vite, Tailwind CSS — `frontend/`
+- **Test runners**: pytest (backend), Vitest (frontend)
+- **Static data**: `frontend/public/results.json` (1874 draws), `frontend/public/predictions.json` (engine output)
 
 ## Conventions
-<!-- Example — replace with your actual conventions:
-Components: PascalCase, colocated with styles
-Functions: camelCase, pure where possible
-Commits: conventional commits (feat:, fix:, chore:)
--->
+
+- Components: PascalCase (`PatternExplorer.tsx`), colocated in `frontend/src/`
+- Python: snake_case functions, type hints, injectable time/RNG for testability
+- Commits: conventional commits (`feat:`, `fix:`, `refine:`, `chore:`)
+- Tests: TDD — failing test first, then implementation (see Testing strategy below)
 
 ## How to run
-<!-- Example — replace with your actual commands. THESE ARE CRITICAL:
-Claude uses the test command to know when a task is truly done.
-Dev server: pnpm dev
-Run tests:  pnpm test
-Type check: pnpm typecheck
-Lint:       pnpm lint
--->
+
+```
+# Backend tests
+cd backend && python -m pytest tests/ -q
+
+# Frontend tests + type check + build
+cd frontend && npm run test && npx tsc --noEmit && npm run build
+
+# Dev server
+cd frontend && npm run dev
+
+# Refresh data (Excel → results.json → predictions.json)
+cd backend && python scripts/refresh_data.py
+
+# Regenerate predictions only (skip Excel step)
+cd backend && python scripts/refresh_data.py --predictions-only
+```
+
+## Data flow
+
+```
+mylotto.co.nz
+   └─ mylotto_scraper.py  (downloads december.xlsx)
+      └─ scripts/refresh_data.py  (orchestrator — called by scraper before git commit)
+         ├─ src/utils/json_converter.py  → frontend/public/results.json
+         └─ src/core/prediction_engine.py → frontend/public/predictions.json
+                                             ↓
+                                     React fetches both at runtime
+```
+
+Both `results.json` and `predictions.json` are committed artifacts (not gitignored).
+They update together on every 30-day scraper run.
 
 <!-- ============================================================ -->
 <!-- READY TO USE — no edits needed below this line.             -->

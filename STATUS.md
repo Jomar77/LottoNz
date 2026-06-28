@@ -83,7 +83,25 @@ All C1–C6 complete. Frontend Vitest suite: 18 tests pass. `tsc --noEmit`, `npm
 - Insertion point: full-width below both sticky columns, above mobile picker modal (line 493 in App.tsx)
 - No mock/stub for C5 — presentational only, verified via type-check + build
 
-### Phase D — BLOCKED on one human decision
+---
+
+## Phase D — Pipeline integration (Lead)
+
+All D1–D5 complete. 88 backend tests pass (77 original + 3 D1 pipeline + 8 D2/D3/D4).
+
+### Items completed
+- D1: `test_predictions_pipeline.py` — engine output validated against Phase A contract on a 10-row fixture
+- D2: `backend/scripts/refresh_data.py` with injectable `results_path`/`predictions_path` seams; `test_refresh_data.py` (8 tests) covering write, mtime ordering, contract validation, and mock-excel path
+- D3: `mylotto_scraper.py` `move_and_convert_file` now calls `REFRESH_SCRIPT` (refresh_data.py) instead of `CONVERT_SCRIPT` (json_converter.py) — both results.json and predictions.json are updated before git_commit_and_push runs
+- D4: refresh_data() always regenerates unconditionally — missing, stale, and invalid predictions.json all replaced correctly
+- D5: CLAUDE.md updated with Stack, Conventions, How to run, and data-flow diagram. Both results.json and predictions.json are not gitignored (confirmed with git check-ignore).
+
+### Key decisions
+- **D3 ordering fix**: scraper subprocess changed from `json_converter.py` → `refresh_data.py`; predictions.json now generated inside `move_and_convert_file()`, before `git_commit_and_push()` — both files land in the same commit
+- **`src/utils/__init__.py`** had same import-time side-effect bug as `core/__init__.py` (`data_cleaner.py` calls its own function at module level). Fixed by replacing star-imports with `__all__ = []`
+- **Test isolation**: `test_refresh_data_excel_path_invokes_excel_to_json` patches both `excel_to_json` AND `DATA_PATH` to avoid clobbering the real results.json
+
+### Phase D — BLOCKED on one human decision (RESOLVED)
 The exec-explorer identified an ordering bug in D3:
 - Inside `mylotto_scraper.py`, `move_and_convert_file()` runs at line 408, then
   `git_commit_and_push()` at line 415-421 — both INSIDE `scrape()`.

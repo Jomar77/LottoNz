@@ -181,27 +181,27 @@ Implement the prediction framework specified in `new-algo.md` as a feature of th
 > data-refresh so `frontend/public/predictions.json` regenerates whenever `results.json` does.
 > Reuses the contract/validator from Phase A. The only phase that edits files spanning both trees.
 
-- [ ] **D1 — Re-affirm the data contract at the integration boundary**
+- [x] **D1 — Re-affirm the data contract at the integration boundary**
   - Tests first: `backend/tests/test_predictions_pipeline.py::test_engine_output_matches_contract` — run the real engine on a small fixed results dataset and assert the produced document passes `validate_predictions_document`.
   - Implement: no new logic if B and A agreed; otherwise reconcile the engine writer to the contract (the contract wins). Confirm `generated_at` is UTC ISO-8601 and `draw_reference` derives from the latest draw.
   - Acceptance: engine output validates against the same schema used by the frontend types; test green.
 
-- [ ] **D2 — Single data-refresh orchestrator (converter → engine)**
+- [x] **D2 — Single data-refresh orchestrator (converter → engine)**
   - Tests first: `backend/tests/test_refresh_data.py` calls the orchestrator with a temp output dir and asserts: (a) `results.json` written, then (b) `predictions.json` written, (c) `predictions.json` mtime ≥ `results.json` mtime, (d) `predictions.json` validates against the contract. Stub the Excel source via the existing `_find_excel_file` seam / a small fixture workbook so the test is hermetic.
   - Implement: `backend/scripts/refresh_data.py` exposing `refresh_data()` that calls `excel_to_json()` (from `json_converter.py`) then `prediction_engine.generate_predictions_file()`, writing `frontend/public/predictions.json` next to `results.json`. **Use this dedicated orchestrator — NOT a call buried in `json_converter.py`** (keeps the converter single-responsibility and avoids importing scipy/numpy into the lightweight converter; gives one obvious command for humans and the scheduler).
   - Acceptance: `python backend/scripts/refresh_data.py` regenerates both files; engine always runs after the converter; test green.
 
-- [ ] **D3 — Wire the orchestrator into the scheduler/scraper path**
+- [x] **D3 — Wire the orchestrator into the scheduler/scraper path**
   - Tests first: `test_refresh_data.py::test_scheduled_run_invokes_refresh` — patch `refresh_data` and assert it is called once after a simulated successful scrape.
   - Implement: update the scraper/scheduler completion path (`backend/src/scrapers/scheduler.py`, scheduled by `backend/scripts/run_scheduler.py`) so a successful scrape+download invokes `refresh_data()` instead of calling `excel_to_json()` directly, so predictions regenerate on every 30-day refresh and the startup catch-up run.
   - Acceptance: a successful scheduled/scraper run produces a fresh `predictions.json`; no code path updates `results.json` without also updating `predictions.json`; test green.
 
-- [ ] **D4 — Stale/missing `predictions.json` guard (regenerate on run)**
+- [x] **D4 — Stale/missing `predictions.json` guard (regenerate on run)**
   - Tests first: `test_refresh_data.py::test_regenerates_when_missing` (delete → run → reappears and validates), `test_regenerates_when_stale` (older than results.json → overwritten and newer), `test_invalid_existing_is_replaced` (contract-violating → replaced by a valid one).
   - Implement: `refresh_data()` unconditionally regenerates predictions.json on each run (no partial/append logic). Frontend absence-handling is owned by Phase C.
   - Acceptance: missing, stale, or invalid predictions.json is always replaced by a valid, contract-conforming file after a refresh; tests green.
 
-- [ ] **D5 — Docs, run instructions, committed-artifact treatment**
+- [x] **D5 — Docs, run instructions, committed-artifact treatment**
   - Tests first: N/A (docs/config). Manual check: `git check-ignore -v frontend/public/predictions.json` returns no match (committable), mirroring `results.json`.
   - Implement: In `CLAUDE.md`, update the **data-flow** line (scraper → `json_converter.py` writes `results.json` → `prediction_engine.py` writes `predictions.json` → React fetches both) and add a **How to run** entry: `cd backend && python scripts/refresh_data.py`. Ensure `.gitignore` treats `predictions.json` identically to `results.json`. **Commit `predictions.json` like `results.json`** — it is a static artifact the Vercel frontend fetches at runtime; committing keeps deploys reproducible without running the backend in CI.
   - Acceptance: `CLAUDE.md` reflects the engine step and `refresh_data.py`; `.gitignore` treats predictions.json like results.json; `predictions.json` is tracked by git after a refresh.
