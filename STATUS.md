@@ -35,6 +35,45 @@
 - `cd backend && python -m pytest tests/ -v` → 30 passed.
 - `cd frontend && npx tsc --noEmit` → exit 0.
 
-### Remaining
-- Phase B (engine, B1–B16) and Phase C (frontend, C1–C6) — run concurrently.
-- Phase D (integration, D1–D5) — last.
+---
+
+## Phase B — Backend prediction engine (Lead)
+
+All B1–B16 complete. 77 backend tests pass. Engine runs against real 1874-row
+results.json and produces a valid predictions.json.
+
+### Key decisions made
+- **RNG type locked to `random.Random`** — consistent with new-algo.md API
+  (`random.sample`, `random.choice`, `random.choices`). One instance seeded once
+  in B13, consumed in fixed call order through hybrid set + both balanced PBs.
+- **B6 top-up**: `generate_burst_set` now always returns exactly 6 sorted numbers
+  (added `_pad_to_n` helper; the original "≤6" was wrong per contract).
+- **B12 both branches sort**: `avoid_duplicates` passthrough and replacement both
+  return `sorted(result)`. Pool-dry case handled by a fallback list.
+- **B11 "hot" = recent-window** (not overall), clarifying new-algo.md ambiguity.
+- **Rationale copy**: descriptive, no predictive language. "mean_reversion" avoids
+  "due for regression" (UX teammate flagged this encodes the gambler's fallacy).
+- **uniformity_confirmed** based on chi-square p-value of MAIN numbers.
+
+### chi_square_p_powerball on real data
+On the 1874-row real dataset the powerball chi-square p-value is `4e-05` — the
+powerball distribution is NOT uniform. This is a real data finding, not a bug.
+`uniformity_confirmed` covers only the main numbers (as documented). The metadata
+field surfaces the raw PB p-value so the UI can decide how to present this.
+
+### Phase C — PAUSED (user decision)
+User chose to finish Phase B first and decide on framing (educational vs
+entertainment) before building the UI (Phase C). See teammate findings in
+SESSION_NOTES.md.
+
+### Phase D — BLOCKED on one human decision
+The exec-explorer identified an ordering bug in D3:
+- Inside `mylotto_scraper.py`, `move_and_convert_file()` runs at line 408, then
+  `git_commit_and_push()` at line 415-421 — both INSIDE `scrape()`.
+- If D3 wires `refresh_data()` into the SCHEDULER after `scrape()` returns,
+  `predictions.json` is generated AFTER the git auto-commit → never committed.
+- To be in the same commit as `results.json`, the engine must run inside `scrape()`
+  BEFORE the git step (inside `move_and_convert_file` or after it but before the
+  commit), which contradicts D2's "dedicated orchestrator, NOT buried in the
+  converter" preference.
+- **Needs a human/lead decision** before D3 can be implemented.
