@@ -1,79 +1,72 @@
 # CLAUDE.md
 
+<!-- ============================================================ -->
+<!-- FILL IN THE THREE SECTIONS BELOW BEFORE YOUR FIRST RUN.      -->
+<!-- Everything under the line is ready to use as-is.            -->
+<!-- ============================================================ -->
+
 ## Stack
 
-**Frontend** (`frontend/`)
-- Runtime: Node.js 24, TypeScript 5 (strict)
-- Framework: React 18 + Vite 5
-- Styling: Tailwind CSS 3
-- Icons: lucide-react
-- Package manager: npm
-- Deploy: Vercel (`frontend/vercel.json`)
-
-**Backend** (`backend/`)
-- Runtime: Python 3.14
-- Scraping: Selenium + Firefox (GeckoDriver via webdriver-manager), BeautifulSoup4
-- Data: pandas, numpy, scipy, openpyxl
-- Config: python-dotenv
-- Tests: pytest + pytest-cov
-
-**Data flow:** Python scraper downloads Excel from mylotto.co.nz → `json_converter.py` converts to `frontend/public/results.json` → React app fetches `/results.json` at runtime.
+- **Research**: Python 3.14, pandas, scipy, numpy — `research/` (engines, scrapers, notebooks)
+- **API**: FastAPI + uvicorn — `api/` (parametric endpoints, wraps research engines)
+- **Frontend**: React 18, TypeScript (strict), Vite, Tailwind CSS — `Frontend/`
+- **Test runners**: pytest (research + api), Vitest (frontend)
+- **Static data**: `Frontend/public/results.json` (1874 draws), `Frontend/public/predictions.json` (engine output)
 
 ## Conventions
 
-**Frontend**
-- Components: PascalCase (`App.tsx`); single-file components — no separate style files
-- Functions/vars: camelCase
-- Types in `src/types.ts`; utilities in `src/utils.ts`; data fetching in `src/dataService.ts`
-- No test framework currently wired for frontend (Vite only, no Vitest/Jest config)
-
-**Backend**
-- Modules: `snake_case` files under `backend/src/{core,scrapers,utils}/`
-- Tests: `backend/tests/test_*.py` with pytest
-- Scheduler runs scraper every 30 days; tracks last run in `backend/src/scrapers/last_run.json`
-
-**Commits:** conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`)
-
-**NZ Lotto rules:** 6 main numbers drawn from 1–40, 1 Powerball from 1–10.
+- Components: PascalCase (`PatternExplorer.tsx`), colocated in `frontend/src/`
+- Python: snake_case functions, type hints, injectable time/RNG for testability
+- Commits: conventional commits (`feat:`, `fix:`, `refine:`, `chore:`)
+- Tests: TDD — failing test first, then implementation (see Testing strategy below)
 
 ## How to run
 
-**Frontend dev server:**
-```bash
-cd frontend && npm run dev
-# → http://localhost:5173/
+```
+# Research/engine tests
+cd research && python -m pytest tests/ -q
+
+# API tests
+cd <repo-root> && python -m pytest api/tests/ -q
+
+# API dev server (http://localhost:8000)
+cd <repo-root> && uvicorn api.main:app --reload
+
+# Frontend tests + type check + build
+cd Frontend && npm run test && npx tsc --noEmit && npm run build
+
+# Frontend dev server (http://localhost:5173)
+cd Frontend && npm run dev
+
+# Refresh data (Excel → results.json → predictions.json)
+cd research && python scripts/refresh_data.py
+
+# Regenerate predictions only (skip Excel step)
+cd research && python scripts/refresh_data.py --predictions-only
 ```
 
-**Frontend type check:**
-```bash
-cd frontend && npx tsc --noEmit
+## Data flow
+
+```
+mylotto.co.nz
+   └─ research/src/scrapers/mylotto_scraper.py  (downloads december.xlsx)
+      └─ research/scripts/refresh_data.py  (orchestrator — called by scraper before git commit)
+         ├─ research/src/utils/json_converter.py  → Frontend/public/results.json
+         └─ research/src/core/prediction_engine.py → Frontend/public/predictions.json
+                                                       ↓
+                                             React fetches both at runtime (static, default view)
+
+api/                              ← parametric "generate your own" feature
+   GET /predict/weighted          ← frequency-weighted tickets with lean/spread/consecutive
+   GET /predict/strategies        ← 5-strategy engine with date_from filtering
 ```
 
-**Frontend build:**
-```bash
-cd frontend && npm run build
-```
+Both `results.json` and `predictions.json` are committed artifacts (not gitignored).
+They update together on every 30-day scraper run.
 
-**Backend tests:**
-```bash
-cd backend && python -m pytest tests/ -v
-```
-
-**Backend — convert Excel to JSON:**
-```bash
-cd backend && python src/utils/json_converter.py
-# Outputs to frontend/public/results.json
-```
-
-**Backend — run scraper manually:**
-```bash
-cd backend && python src/scrapers/mylotto_scraper.py
-```
-
-**Backend — run scheduler:**
-```bash
-cd backend && python scripts/run_scheduler.py
-```
+<!-- ============================================================ -->
+<!-- READY TO USE — no edits needed below this line.             -->
+<!-- ============================================================ -->
 
 ---
 

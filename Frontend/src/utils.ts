@@ -1,4 +1,4 @@
-import { LotteryResult, GenerationPreferences, GeneratedNumbers } from './types';
+import { LotteryResult, GenerationPreferences, GeneratedNumbers, PredictionSet, PredictionStrategy, StrategyId } from './types';
 
 /**
  * Enhanced Randomness Utilities
@@ -176,4 +176,147 @@ export function generateNumbers(
     numbers: [4, 8, 15, 16, 23, 42],
     powerball: generatePowerball()
   };
+}
+
+// ---------------------------------------------------------------------------
+// Strategy-based generation engine
+// ---------------------------------------------------------------------------
+
+function calculateRecentFrequencies(historicalData: LotteryResult[], count = 104): number[] {
+  const recent = historicalData.slice(0, count);
+  const freq = new Array(40).fill(0);
+  for (const result of recent) {
+    for (const num of result.numbers) {
+      freq[num - 1]++;
+    }
+  }
+  return freq;
+}
+
+function strategyBaseLambda(strategy: StrategyId, freq: number[], recentFreq: number[]): number[] {
+  const mx = Math.max(...freq);
+  switch (strategy) {
+    case 'hot':     return freq.map(f => Math.pow(f, 1.6));
+    case 'recent':  return recentFreq.map(r => Math.pow(r + 1, 1.8));
+    case 'overdue': return freq.map(f => Math.pow(mx + 20 - f, 1.8));
+    case 'decay':   return freq.map(f => f + 1);
+    default:        return freq.map(() => 1);
+  }
+}
+
+function combinedStrategyBase(strategies: StrategyId[], freq: number[], recentFreq: number[]): number[] {
+  const ids: StrategyId[] = strategies.length ? strategies : ['random'];
+  const acc = new Array(40).fill(0);
+  for (const id of ids) {
+    const b = strategyBaseLambda(id, freq, recentFreq);
+    const sum = b.reduce((s, v) => s + v, 0);
+    for (let i = 0; i < 40; i++) acc[i] += b[i] / sum;
+  }
+  return acc;
+}
+
+// Exponential competitive race: 6 numbers with shortest wait times win.
+function exponentialRacePick6(base: number[], mean: number): number[] {
+  const lam = base.map((b, i) => b * (1 + Math.exp(-Math.pow((i + 1) - mean, 2) / 162) * 3));
+  const tau = lam.map(l => {
+    let u = 0;
+    while (u === 0) u = cryptoRandom();
+    return -Math.log(u) / l;
+  });
+  return tau
+    .map((t, i) => [t, i + 1] as [number, number])
+    .sort((a, b) => a[0] - b[0])
+    .slice(0, 6)
+    .map(x => x[1])
+    .sort((a, b) => a - b);
+}
+
+export function generateWithStrategies(
+  historicalData: LotteryResult[],
+  strategies: StrategyId[],
+  preferences: GenerationPreferences
+): GeneratedNumbers {
+  const freqMap = calculateFrequencies(historicalData);
+  const freq = Array.from({ length: 40 }, (_, i) => freqMap.get(i + 1) || 0);
+  const recentFreq = calculateRecentFrequencies(historicalData);
+  const base = combinedStrategyBase(strategies, freq, recentFreq);
+  const mean = preferences.leaning === 'left' ? 11 : preferences.leaning === 'right' ? 30 : 20;
+
+  let last: number[] = [1, 8, 15, 22, 29, 36];
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const nums = exponentialRacePick6(base, mean);
+    last = nums;
+    const sp = nums[5] - nums[0];
+    const hasC = nums.some((v, i) => i < 5 && nums[i + 1] - v === 1);
+    const spreadOk = (preferences.spread === 'tight' && sp <= 18) || (preferences.spread === 'wide' && sp >= 22) || preferences.spread === 'mixed';
+    const consecOk = preferences.consecutive === 'yes' ? hasC : !hasC;
+    if (spreadOk && consecOk) return { numbers: nums, powerball: generatePowerball() };
+  }
+  return { numbers: last, powerball: generatePowerball() };
+}
+
+// ---------------------------------------------------------------------------
+// C4 — Pure display helpers for the Pattern Explorer section
+// (No DOM references — safe in node test environment)
+// ---------------------------------------------------------------------------
+
+const STRATEGY_LABELS: Record<PredictionStrategy, string> = {
+  burst_volatility: 'Burst & Volatility',
+  mean_reversion: 'Mean Reversion',
+  momentum_carry: 'Momentum Carry-Over',
+  balanced_hybrid: 'Balanced Mix',
+  lean_bias: 'Left / Right Lean',
+};
+
+const FALLACY_LABELS: Record<PredictionStrategy, string> = {
+  burst_volatility: 'Clustering Fallacy',
+  mean_reversion: "Gambler's Fallacy",
+  momentum_carry: 'Hot-Hand Fallacy',
+  balanced_hybrid: 'Diversification Fallacy',
+  lean_bias: 'Positional Bias Fallacy',
+};
+
+const FALLACY_EXPLANATIONS: Record<PredictionStrategy, string> = {
+  burst_volatility:
+    'Clusters in past data look meaningful but are expected noise in a uniform draw. Historically bursty numbers have no higher chance of appearing next.',
+  mean_reversion:
+    "Cold numbers are not 'due.' The draw has no memory — past frequency has no effect on the next result.",
+  momentum_carry:
+    'Streaks in past draws do not continue. Each draw is fully independent; a number appearing often recently is no more likely to appear again.',
+  balanced_hybrid:
+    'Spreading picks across hot, cold, and neutral zones does not change the expected probability — every combination has identical odds.',
+  lean_bias:
+    'Left or right lean in past draws has no carry-over effect. The next draw selects randomly from the full 1–40 range regardless of recent positional patterns.',
+};
+
+function toTitleCase(str: string): string {
+  return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+export function formatStrategyLabel(strategy: string): string {
+  return STRATEGY_LABELS[strategy as PredictionStrategy] ?? toTitleCase(strategy);
+}
+
+export function formatFallacyLabel(strategy: string): string {
+  return FALLACY_LABELS[strategy as PredictionStrategy] ?? toTitleCase(strategy);
+}
+
+export function formatFallacyExplanation(strategy: string): string {
+  return FALLACY_EXPLANATIONS[strategy as PredictionStrategy] ?? '';
+}
+
+export function validatePredictionSet(set: PredictionSet): boolean {
+  const { main_numbers, powerball } = set;
+  if (!Array.isArray(main_numbers) || main_numbers.length !== 6) return false;
+  if (new Set(main_numbers).size !== 6) return false;
+  if (main_numbers.some(n => n < 1 || n > 40)) return false;
+  for (let i = 1; i < main_numbers.length; i++) {
+    if (main_numbers[i] <= main_numbers[i - 1]) return false;
+  }
+  if (powerball < 1 || powerball > 10) return false;
+  return true;
+}
+
+export function orderPredictionSets(sets: PredictionSet[]): PredictionSet[] {
+  return sets.filter(validatePredictionSet).sort((a, b) => a.id - b.id);
 }

@@ -52,6 +52,7 @@ DATA_DIR = SRC_DIR / 'lotto-data'
 EXCEL_FILE = DATA_DIR / 'december.xlsx'
 DOWNLOADS_DIR = Path.home() / 'Downloads'
 CONVERT_SCRIPT = SRC_DIR / 'utils' / 'json_converter.py'
+REFRESH_SCRIPT = BACKEND_DIR / 'scripts' / 'refresh_data.py'
 RESULTS_JSON = REPO_DIR / 'frontend' / 'public' / 'results.json'
 
 
@@ -260,21 +261,23 @@ class MyLottoScraper:
             shutil.move(downloaded_file, EXCEL_FILE)
             logger.info(f"File saved as: {EXCEL_FILE}")
             
-            # Run the conversion script
-            logger.info(f"Running conversion script: {CONVERT_SCRIPT}")
+            # Run the data-refresh orchestrator (converts Excel → results.json,
+            # then generates predictions.json) so both files are ready before
+            # the git commit that follows.
+            logger.info(f"Running data refresh: {REFRESH_SCRIPT}")
             result = subprocess.run(
-                [sys.executable, str(CONVERT_SCRIPT)],
+                [sys.executable, str(REFRESH_SCRIPT)],
                 capture_output=True,
                 text=True,
                 cwd=str(BACKEND_DIR)
             )
-            
+
             if result.returncode == 0:
-                logger.info("Conversion successful:")
+                logger.info("Data refresh successful:")
                 logger.info(result.stdout)
                 return True
             else:
-                logger.error("Conversion failed:")
+                logger.error("Data refresh failed:")
                 logger.error(result.stderr)
                 return False
                 
