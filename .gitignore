@@ -129,3 +129,19 @@ env/
 
 .playwright-mcp/
 
+# --- Append these lines to your existing .gitignore ---
+
+# Claude session-local files (per-machine, not shared)
+STATUS.md
+SESSION_NOTES.md
+
+# Worktrees (if you ever use them)
+.claude/worktrees/
+
+# Secrets — make sure these are already ignored
+.env
+.env.*
+!.env.example
+
+# Keep CLAUDE.md, PLAN.md, .claudeignore, and .claude/commands/ tracked.
+# Those are shared project config and SHOULD be committed.

@@ -1,37 +1,79 @@
 # CLAUDE.md
 
-<!-- ============================================================ -->
-<!-- FILL IN THE THREE SECTIONS BELOW BEFORE YOUR FIRST RUN.      -->
-<!-- Everything under the line is ready to use as-is.            -->
-<!-- ============================================================ -->
-
 ## Stack
-<!-- Example — replace with your actual stack:
-Runtime: Node.js 20, TypeScript (strict)
-Framework: Next.js 15 (App Router)
-Database: PostgreSQL via Prisma
-Package manager: pnpm
--->
+
+**Frontend** (`frontend/`)
+- Runtime: Node.js 24, TypeScript 5 (strict)
+- Framework: React 18 + Vite 5
+- Styling: Tailwind CSS 3
+- Icons: lucide-react
+- Package manager: npm
+- Deploy: Vercel (`frontend/vercel.json`)
+
+**Backend** (`backend/`)
+- Runtime: Python 3.14
+- Scraping: Selenium + Firefox (GeckoDriver via webdriver-manager), BeautifulSoup4
+- Data: pandas, numpy, scipy, openpyxl
+- Config: python-dotenv
+- Tests: pytest + pytest-cov
+
+**Data flow:** Python scraper downloads Excel from mylotto.co.nz → `json_converter.py` converts to `frontend/public/results.json` → React app fetches `/results.json` at runtime.
 
 ## Conventions
-<!-- Example — replace with your actual conventions:
-Components: PascalCase, colocated with styles
-Functions: camelCase, pure where possible
-Commits: conventional commits (feat:, fix:, chore:)
--->
+
+**Frontend**
+- Components: PascalCase (`App.tsx`); single-file components — no separate style files
+- Functions/vars: camelCase
+- Types in `src/types.ts`; utilities in `src/utils.ts`; data fetching in `src/dataService.ts`
+- No test framework currently wired for frontend (Vite only, no Vitest/Jest config)
+
+**Backend**
+- Modules: `snake_case` files under `backend/src/{core,scrapers,utils}/`
+- Tests: `backend/tests/test_*.py` with pytest
+- Scheduler runs scraper every 30 days; tracks last run in `backend/src/scrapers/last_run.json`
+
+**Commits:** conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`)
+
+**NZ Lotto rules:** 6 main numbers drawn from 1–40, 1 Powerball from 1–10.
 
 ## How to run
-<!-- Example — replace with your actual commands. THESE ARE CRITICAL:
-Claude uses the test command to know when a task is truly done.
-Dev server: pnpm dev
-Run tests:  pnpm test
-Type check: pnpm typecheck
-Lint:       pnpm lint
--->
 
-<!-- ============================================================ -->
-<!-- READY TO USE — no edits needed below this line.             -->
-<!-- ============================================================ -->
+**Frontend dev server:**
+```bash
+cd frontend && npm run dev
+# → http://localhost:5173/
+```
+
+**Frontend type check:**
+```bash
+cd frontend && npx tsc --noEmit
+```
+
+**Frontend build:**
+```bash
+cd frontend && npm run build
+```
+
+**Backend tests:**
+```bash
+cd backend && python -m pytest tests/ -v
+```
+
+**Backend — convert Excel to JSON:**
+```bash
+cd backend && python src/utils/json_converter.py
+# Outputs to frontend/public/results.json
+```
+
+**Backend — run scraper manually:**
+```bash
+cd backend && python src/scrapers/mylotto_scraper.py
+```
+
+**Backend — run scheduler:**
+```bash
+cd backend && python scripts/run_scheduler.py
+```
 
 ---
 
