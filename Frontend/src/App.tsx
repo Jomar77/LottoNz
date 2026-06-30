@@ -1,18 +1,35 @@
-﻿import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
-import { Search, Sparkles, TrendingUp, Settings, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
-import { fetchLotteryData, fetchPredictions } from './dataService';
-import { findHistoricalMatch, generateNumbers } from './utils';
-import { LotteryResult, GenerationPreferences, GeneratedNumbers, PredictionsDocument } from './types';
-import { PatternExplorer } from './PatternExplorer';
+import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
+import { Search, Sparkles, TrendingUp, Settings, Pencil, Flame, Zap, RotateCcw, Atom, Shuffle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { fetchLotteryData } from './dataService';
+import { findHistoricalMatch, generateNumbers, generateWithStrategies } from './utils';
+import type { LotteryResult, GenerationPreferences, GeneratedNumbers, StrategyId, EngineType } from './types';
+import { CookieBanner } from './components/CookieBanner';
+import { PrivacyModal } from './components/PrivacyModal';
 
 const ITEM_H = 48;
 const VISIBLE = 5;
+
+interface StrategyDef {
+  id: StrategyId;
+  name: string;
+  desc: string;
+  color: string;
+  Icon: LucideIcon;
+}
+
+const STRATEGY_DEFS: StrategyDef[] = [
+  { id: 'hot',     name: 'Hot Streak',   desc: 'Leans on the most-drawn balls across all historical draws.', color: '#fe8302', Icon: Flame },
+  { id: 'recent',  name: 'Recent Form',  desc: 'Recency-weighted — the last year of draws dominates.',       color: '#0190d6', Icon: Zap },
+  { id: 'overdue', name: 'Overdue',      desc: 'Targets the cold balls that are statistically due.',          color: '#329c52', Icon: RotateCcw },
+  { id: 'decay',   name: 'Decay Sample', desc: '40 exponential sources — the 6 fastest emissions win.',       color: '#9785b8', Icon: Atom },
+  { id: 'random',  name: 'Pure Random',  desc: 'Crypto quick pick — every ball equally likely.',              color: '#6b7280', Icon: Shuffle },
+];
 
 function App() {
   const [data, setData] = useState<LotteryResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [predictions, setPredictions] = useState<PredictionsDocument | null>(null);
   const [generatedList, setGeneratedList] = useState<GeneratedNumbers[]>([]);
   const [bulkCount, setBulkCount] = useState(1);
   const [bulkInputStr, setBulkInputStr] = useState('1');
@@ -21,13 +38,15 @@ function App() {
   const [tempCount, setTempCount] = useState(1);
   const [manualNumbers, setManualNumbers] = useState('');
   const [manualCheckMessage, setManualCheckMessage] = useState<string | null>(null);
-  const [showPreferences, setShowPreferences] = useState(false);
+  const [engine, setEngine] = useState<EngineType>('gaussian');
+  const [selectedStrategies, setSelectedStrategies] = useState<StrategyId[]>(['hot']);
   const [preferences, setPreferences] = useState<GenerationPreferences>({
     spread: 'wide',
     leaning: 'middle',
-    consecutive: 'yes'
+    consecutive: 'yes',
   });
-
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [gdprDismissed, setGdprDismissed] = useState(() => localStorage.getItem('lotto_gdpr_dismissed') === 'true');
   const scrollZoneRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -49,10 +68,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetchPredictions().then(setPredictions);
-  }, []);
-
-  useEffect(() => {
     if (showPickerModal && pickerRef.current) {
       pickerRef.current.scrollTop = (tempCount - 1) * ITEM_H;
     }
@@ -60,7 +75,7 @@ function App() {
 
   const adjustCount = useCallback((delta: number) => {
     setBulkCount(prev => {
-      const next = Math.max(1, Math.min(50, prev + delta));
+      const next = Math.max(1, Math.min(20, prev + delta));
       setBulkInputStr(String(next));
       return next;
     });
@@ -83,12 +98,12 @@ function App() {
     const raw = e.target.value.replace(/\D/g, '');
     setBulkInputStr(raw);
     const n = parseInt(raw, 10);
-    if (!isNaN(n) && n >= 1 && n <= 50) setBulkCount(n);
+    if (!isNaN(n) && n >= 1 && n <= 20) setBulkCount(n);
   };
 
   const handleCountBlur = () => {
     const n = parseInt(bulkInputStr, 10);
-    const clamped = isNaN(n) || n < 1 ? 1 : Math.min(50, n);
+    const clamped = isNaN(n) || n < 1 ? 1 : Math.min(20, n);
     setBulkCount(clamped);
     setBulkInputStr(String(clamped));
   };
@@ -102,7 +117,7 @@ function App() {
     const el = pickerRef.current;
     if (!el) return;
     const index = Math.round(el.scrollTop / ITEM_H);
-    setTempCount(Math.max(1, Math.min(50, index + 1)));
+    setTempCount(Math.max(1, Math.min(20, index + 1)));
   };
 
   const confirmPicker = () => {
@@ -111,11 +126,21 @@ function App() {
     setShowPickerModal(false);
   };
 
+  const toggleStrategy = (id: StrategyId) => {
+    setSelectedStrategies(prev =>
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
+  };
+
   const handleGenerate = () => {
     if (data.length === 0) return;
     const tickets: GeneratedNumbers[] = [];
     for (let i = 0; i < bulkCount; i++) {
-      tickets.push(generateNumbers(data, preferences));
+      if (engine === 'strategy') {
+        tickets.push(generateWithStrategies(data, selectedStrategies, preferences));
+      } else {
+        tickets.push(generateNumbers(data, preferences));
+      }
     }
     setGeneratedList(tickets);
   };
@@ -157,6 +182,27 @@ function App() {
   const latestResult = data.length > 0 ? data[0] : null;
   const drumPadding = Math.floor(VISIBLE / 2) * ITEM_H;
 
+  const activeDef = engine === 'gaussian'
+    ? null
+    : STRATEGY_DEFS.find(d => selectedStrategies.includes(d.id)) ?? null;
+
+  const segBtn = (active: boolean, activeClass: string) =>
+    `px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${active ? activeClass : 'bg-transparent text-gray-500 hover:text-gray-700'}`;
+
+  const prefBtn = (active: boolean, color: 'base' | 'blue') =>
+    `flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all border ${
+      active
+        ? color === 'base' ? 'bg-base text-white border-base shadow-sm' : 'bg-highlight-blue text-white border-highlight-blue shadow-sm'
+        : 'bg-white text-gray-700 border-gray-300'
+    }`;
+
+  const prefBtnSm = (active: boolean, color: 'base' | 'blue') =>
+    `flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all border ${
+      active
+        ? color === 'base' ? 'bg-base text-white border-base shadow-sm' : 'bg-highlight-blue text-white border-highlight-blue shadow-sm'
+        : 'bg-white text-gray-700 border-gray-300'
+    }`;
+
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-6xl mx-auto">
@@ -167,13 +213,13 @@ function App() {
             LottoNz Smart Picker
             <Sparkles className="w-12 h-12 text-highlight-blue/60" />
           </h1>
-          <p className="text-white text-lg">Random quick-picks — 1,874 draws confirm every number is equally likely</p>
+          <p className="text-white text-lg">Weighted number generation based on historical data</p>
         </div>
 
-        {/* Main layout: Lucky Tickets LEFT, content RIGHT on desktop */}
+        {/* Main layout */}
         <div className="flex flex-col lg:flex-row gap-6">
 
-          {/* Lucky Tickets — left on desktop, below content on mobile */}
+          {/* Lucky Tickets — left on desktop */}
           <div className="order-2 lg:order-1 w-full lg:w-[28rem] flex-shrink-0 lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]">
             <div className="bg-white rounded-2xl shadow-2xl overflow-hidden lg:h-full lg:flex lg:flex-col">
 
@@ -185,7 +231,7 @@ function App() {
                 </div>
               </div>
 
-              {/* Mobile counter: big number + Edit */}
+              {/* Mobile counter */}
               <div className="lg:hidden p-6 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">
                   Number of Tickets
@@ -207,7 +253,7 @@ function App() {
                 </div>
               </div>
 
-              {/* Desktop counter: ± buttons + scroll */}
+              {/* Desktop counter */}
               <div className="hidden lg:block p-6 border-b border-gray-100 flex-shrink-0">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">
                   Number of Tickets
@@ -238,14 +284,14 @@ function App() {
                   </div>
                   <button
                     onClick={() => adjustCount(1)}
-                    disabled={bulkCount >= 50}
+                    disabled={bulkCount >= 20}
                     className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 disabled:opacity-25 flex items-center justify-center transition-all text-gray-600 font-bold text-lg leading-none"
                   >
                     +
                   </button>
                 </div>
                 <p className="text-xs text-gray-400 text-center mt-3">
-                  Scroll, click ±, or type · max 50
+                  Scroll, click ±, or type · max 20
                 </p>
               </div>
 
@@ -263,22 +309,27 @@ function App() {
               {/* Generated tickets */}
               {generatedList.length > 0 && (
                 <div className="flex-1 min-h-0 flex flex-col">
-                  {/* Label */}
-                  <div className="px-5 py-3 bg-gray-50 flex-shrink-0">
+                  {/* Label with engine indicator */}
+                  <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-center gap-2 flex-shrink-0">
+                    {engine === 'gaussian' ? (
+                      <Settings className="w-4 h-4 text-base" />
+                    ) : activeDef ? (
+                      <activeDef.Icon size={16} color={activeDef.color} />
+                    ) : (
+                      <Shuffle className="w-4 h-4 text-gray-400" />
+                    )}
                     <p className="text-xs font-semibold text-gray-500 text-center uppercase tracking-wider">
-                      {generatedList.length > 1 ? `${generatedList.length} Tickets` : 'Your Quick Pick'}
+                      {generatedList.length > 1 ? `${generatedList.length} Tickets` : 'Your Lucky Numbers'}
                     </p>
                   </div>
 
-                  {/* Desktop: number balls, scrolls inside the card */}
+                  {/* Desktop: scrollable number balls */}
                   <div className="hidden lg:block flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
                     {generatedList.map((ticket, ticketIdx) => (
                       <div key={ticketIdx} className="flex items-center gap-2.5 rounded-xl bg-gray-50 px-3 py-2.5">
-                        {generatedList.length > 1 && (
-                          <span className="text-sm font-semibold text-gray-400 w-5 flex-shrink-0 tabular-nums text-right">
-                            {ticketIdx + 1}
-                          </span>
-                        )}
+                        <span className="text-sm font-semibold text-gray-400 w-5 flex-shrink-0 tabular-nums text-right">
+                          {ticketIdx + 1}
+                        </span>
                         <div className="flex items-center gap-2 flex-1">
                           {ticket.numbers.map((num, idx) => (
                             <span
@@ -296,18 +347,16 @@ function App() {
                     ))}
                   </div>
 
-                  {/* Mobile: full-width cards with large balls */}
+                  {/* Mobile: full-width cards */}
                   <div className="lg:hidden p-4 space-y-4">
                     {generatedList.map((ticket, ticketIdx) => (
                       <div
                         key={ticketIdx}
                         className="bg-gradient-to-br from-base/10 to-highlight-blue/10 rounded-xl p-4 border-2 border-base/20"
                       >
-                        {generatedList.length > 1 && (
-                          <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
-                            Ticket {ticketIdx + 1}
-                          </p>
-                        )}
+                        <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
+                          Ticket {ticketIdx + 1}
+                        </p>
                         <div className="flex items-center justify-center gap-3 flex-wrap">
                           {ticket.numbers.map((num, idx) => (
                             <div
@@ -316,7 +365,7 @@ function App() {
                               style={{
                                 animationDelay: `${(ticketIdx * 7 + idx) * 60}ms`,
                                 animationDuration: '1s',
-                                animationIterationCount: '1'
+                                animationIterationCount: '1',
                               }}
                             >
                               {num}
@@ -327,7 +376,7 @@ function App() {
                             style={{
                               animationDelay: `${(ticketIdx * 7 + 6) * 60}ms`,
                               animationDuration: '1s',
-                              animationIterationCount: '1'
+                              animationIterationCount: '1',
                             }}
                           >
                             {ticket.powerball}
@@ -341,7 +390,7 @@ function App() {
             </div>
           </div>
 
-          {/* Right column: Latest Result + main card */}
+          {/* Right column */}
           <div className="order-1 lg:order-2 flex-1 min-w-0 flex flex-col gap-6 lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]">
 
             {/* Latest Result */}
@@ -369,136 +418,205 @@ function App() {
               </div>
             )}
 
-            {/* Main card: Preferences + Manual Check — fills column height to match Lucky Tickets; scrolls only if it ever overflows */}
+            {/* Generation Engine card */}
             <div className="lg:flex-1 lg:min-h-0">
-            <div className="bg-white rounded-2xl shadow-2xl overflow-y-auto lg:h-full flex flex-col">
-              {/* Preferences */}
-              <div className="border-b border-gray-200">
-                <button
-                  onClick={() => setShowPreferences(!showPreferences)}
-                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-highlight-blue" />
-                    <span className="font-semibold text-gray-700">Generation Preferences</span>
+              <div className="bg-white rounded-2xl shadow-2xl overflow-y-auto lg:h-full flex flex-col">
+
+                {/* Engine header with segmented toggle */}
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3 flex-shrink-0">
+                  <Settings className="w-5 h-5 text-highlight-blue" />
+                  <span className="font-semibold text-gray-700">Generation Engine</span>
+                  <div className="ml-auto flex bg-gray-100 rounded-lg p-1 gap-1">
+                    <button
+                      onClick={() => setEngine('gaussian')}
+                      className={segBtn(engine === 'gaussian', 'bg-base text-white shadow-sm')}
+                    >
+                      Bell Curve
+                    </button>
+                    <button
+                      onClick={() => setEngine('strategy')}
+                      className={segBtn(engine === 'strategy', 'bg-highlight-blue text-white shadow-sm')}
+                    >
+                      Strategies
+                    </button>
                   </div>
-                  {showPreferences ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
+                </div>
 
-                {showPreferences && (
-                  <div className="px-6 pb-6 pt-2 bg-gray-50 space-y-3">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                      <label className="sm:w-40 sm:flex-shrink-0 text-sm font-medium text-gray-700">Spread</label>
+                {/* Bell Curve panel */}
+                {engine === 'gaussian' && (
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-col gap-3.5">
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Hybrid Gaussian weighting over historical frequency. Shape the bell curve, then generate.
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <label className="w-36 flex-shrink-0 text-sm font-medium text-gray-700">Spread</label>
                       <div className="flex gap-2 flex-1">
-                        {(['tight', 'wide', 'mixed'] as const).map((option) => (
-                          <button
-                            key={option}
-                            onClick={() => setPreferences({ ...preferences, spread: option })}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                              preferences.spread === option
-                                ? 'bg-base text-white shadow-md'
-                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
-                          >
-                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                        {(['tight', 'wide', 'mixed'] as const).map(opt => (
+                          <button key={opt} onClick={() => setPreferences({ ...preferences, spread: opt })} className={prefBtn(preferences.spread === opt, 'base')}>
+                            {opt.charAt(0).toUpperCase() + opt.slice(1)}
                           </button>
                         ))}
                       </div>
                     </div>
-
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                      <label className="sm:w-40 sm:flex-shrink-0 text-sm font-medium text-gray-700">Leaning</label>
+                    <div className="flex items-center gap-4">
+                      <label className="w-36 flex-shrink-0 text-sm font-medium text-gray-700">Leaning</label>
                       <div className="flex gap-2 flex-1">
-                        {(['left', 'middle', 'right'] as const).map((option) => (
-                          <button
-                            key={option}
-                            onClick={() => setPreferences({ ...preferences, leaning: option })}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                              preferences.leaning === option
-                                ? 'bg-highlight-blue text-white shadow-md'
-                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
-                          >
-                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                        {(['left', 'middle', 'right'] as const).map(opt => (
+                          <button key={opt} onClick={() => setPreferences({ ...preferences, leaning: opt })} className={prefBtn(preferences.leaning === opt, 'blue')}>
+                            {opt.charAt(0).toUpperCase() + opt.slice(1)}
                           </button>
                         ))}
                       </div>
                     </div>
-
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                      <label className="sm:w-40 sm:flex-shrink-0 text-sm font-medium text-gray-700">Consecutive Numbers</label>
+                    <div className="flex items-center gap-4">
+                      <label className="w-36 flex-shrink-0 text-sm font-medium text-gray-700">Consecutive Numbers</label>
                       <div className="flex gap-2 flex-1">
-                        {(['yes', 'no'] as const).map((option) => (
-                          <button
-                            key={option}
-                            onClick={() => setPreferences({ ...preferences, consecutive: option })}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                              preferences.consecutive === option
-                                ? 'bg-base text-white shadow-md'
-                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
-                          >
-                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                        {(['yes', 'no'] as const).map(opt => (
+                          <button key={opt} onClick={() => setPreferences({ ...preferences, consecutive: opt })} className={prefBtn(preferences.consecutive === opt, 'base')}>
+                            {opt.charAt(0).toUpperCase() + opt.slice(1)}
                           </button>
                         ))}
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Manual History Check */}
-              <div className="p-6">
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Search className="w-5 h-5 text-highlight-blue" />
-                    <h3 className="text-lg font-semibold text-gray-800">Check Your Own Numbers</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Enter 6 main numbers to see whether the exact combination already exists in the dataset.
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <input
-                      type="text"
-                      value={manualNumbers}
-                      onChange={(event) => setManualNumbers(event.target.value)}
-                      placeholder="Example: 3, 7, 12, 18, 24, 31"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder:text-gray-400 focus:border-highlight-blue focus:outline-none focus:ring-2 focus:ring-highlight-blue/20"
-                    />
-                    <button
-                      onClick={handleManualCheck}
-                      disabled={loading || data.length === 0}
-                      className="w-full rounded-lg bg-gray-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Check Against Dataset
-                    </button>
-                  </div>
-                  {manualCheckMessage && (
-                    <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
-                      {manualCheckMessage}
+                {/* Strategies panel */}
+                {engine === 'strategy' && (
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-col gap-2.5">
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Check any philosophies to blend — their weightings combine into one model for every ticket you generate.
+                    </p>
+                    {STRATEGY_DEFS.map(({ id, name, desc, color, Icon }) => {
+                      const selected = selectedStrategies.includes(id);
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => toggleStrategy(id)}
+                          className="flex items-center gap-3.5 w-full text-left px-3.5 py-3 rounded-xl cursor-pointer transition-all"
+                          style={{
+                            background: selected ? `${color}14` : '#fff',
+                            border: `2px solid ${selected ? color : '#e5e7eb'}`,
+                          }}
+                        >
+                          <span
+                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: `${color}1f` }}
+                          >
+                            <Icon size={20} color={color} />
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-sm font-semibold text-gray-800">{name}</span>
+                            <span className="block text-xs text-gray-500 mt-0.5 leading-snug">{desc}</span>
+                          </span>
+                          <span
+                            className="w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
+                            style={{
+                              background: selected ? color : '#fff',
+                              border: `2px solid ${selected ? color : '#d1d5db'}`,
+                              color: selected ? '#fff' : 'transparent',
+                            }}
+                          >
+                            ✓
+                          </span>
+                        </button>
+                      );
+                    })}
+
+                    {/* Refine Weighting */}
+                    <div className="mt-1.5 pt-3.5 border-t border-gray-200 flex flex-col gap-2.5">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Refine Weighting</span>
+                      <div className="flex items-center gap-3.5">
+                        <label className="w-28 flex-shrink-0 text-sm font-medium text-gray-700">Leaning</label>
+                        <div className="flex gap-1.5 flex-1">
+                          {(['left', 'middle', 'right'] as const).map(opt => (
+                            <button key={opt} onClick={() => setPreferences({ ...preferences, leaning: opt })} className={prefBtnSm(preferences.leaning === opt, 'blue')}>
+                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3.5">
+                        <label className="w-28 flex-shrink-0 text-sm font-medium text-gray-700">Spread</label>
+                        <div className="flex gap-1.5 flex-1">
+                          {(['tight', 'wide', 'mixed'] as const).map(opt => (
+                            <button key={opt} onClick={() => setPreferences({ ...preferences, spread: opt })} className={prefBtnSm(preferences.spread === opt, 'base')}>
+                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3.5">
+                        <label className="w-28 flex-shrink-0 text-sm font-medium text-gray-700">Consecutive</label>
+                        <div className="flex gap-1.5 flex-1">
+                          {(['yes', 'no'] as const).map(opt => (
+                            <button key={opt} onClick={() => setPreferences({ ...preferences, consecutive: opt })} className={prefBtnSm(preferences.consecutive === opt, 'base')}>
+                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                )}
 
-              {error && (
-                <div className="px-6 pb-6">
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    {error}
+                {/* Manual History Check */}
+                <div className="p-6">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Search className="w-4 h-4 text-highlight-blue" />
+                      <h3 className="text-base font-semibold text-gray-800">Check Your Own Numbers</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+                      Enter 6 main numbers to check if the exact combination exists in the dataset.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        value={manualNumbers}
+                        onChange={(e) => setManualNumbers(e.target.value)}
+                        placeholder="e.g. 3, 7, 12, 18, 24, 31"
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-800 placeholder:text-gray-400 focus:border-highlight-blue focus:outline-none focus:ring-2 focus:ring-highlight-blue/20 text-sm"
+                      />
+                      <button
+                        onClick={handleManualCheck}
+                        disabled={loading || data.length === 0}
+                        className="w-full rounded-lg bg-gray-900 px-4 py-2.5 font-semibold text-white text-sm transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Check Against Dataset
+                      </button>
+                    </div>
+                    {manualCheckMessage && (
+                      <div className="mt-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                        {manualCheckMessage}
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
+
+                {error && (
+                  <div className="px-6 pb-6">
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <PatternExplorer doc={predictions} />
+      {!gdprDismissed && (
+        <CookieBanner
+          onPrivacyClick={() => setShowPrivacy(true)}
+          onDismiss={() => {
+            localStorage.setItem('lotto_gdpr_dismissed', 'true');
+            setGdprDismissed(true);
+          }}
+        />
+      )}
+      {showPrivacy && <PrivacyModal onClose={() => setShowPrivacy(false)} />}
 
       {/* iOS-style picker modal (mobile only) */}
       {showPickerModal && (
@@ -545,7 +663,7 @@ function App() {
                   paddingBottom: drumPadding,
                 }}
               >
-                {Array.from({ length: 50 }, (_, i) => i + 1).map(n => (
+                {Array.from({ length: 20 }, (_, i) => i + 1).map(n => (
                   <div
                     key={n}
                     className={`snap-center flex items-center justify-center font-semibold transition-all duration-100 select-none ${

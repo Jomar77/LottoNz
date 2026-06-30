@@ -268,3 +268,106 @@ runs alone, last.
 - **Session handoff:** each agent updates `SESSION_NOTES.md` before stopping (completed work,
   decisions, remaining unchecked items, anything needing human review) so the lead integrates in
   Phase D with full context.
+
+---
+
+## Backend Hardening
+
+> Future work. Implement after the prediction engine and frontend are stable. These items harden the
+> FastAPI backend against cross-origin abuse and runaway traffic before any public deployment.
+
+- [ ] **H1 — CORS: restrict allowed origins via `CORSMiddleware`**
+  - Acceptance criteria:
+    - Requests from `http://localhost:5173` (dev) and the configured production domain receive correct
+      `Access-Control-Allow-Origin` headers.
+    - Requests from any other origin do NOT receive `Access-Control-Allow-Origin` (browser blocks them).
+    - Preflight `OPTIONS` requests return `200` with correct `Access-Control-Allow-Methods`,
+      `Access-Control-Allow-Headers`, and `Access-Control-Allow-Origin` for allowed origins.
+    - All methods other than `GET` (e.g. `POST`, `PUT`, `DELETE`) are excluded from allowed methods.
+  - Implementation notes:
+    - In `api/main.py`: `from fastapi.middleware.cors import CORSMiddleware`
+    - Read allowed origins from env var `ALLOWED_ORIGINS` (comma-separated string); fall back to
+      `["http://localhost:5173"]` when the env var is absent (dev default).
+    - Register middleware:
+      ```python
+      app.add_middleware(
+          CORSMiddleware,
+          allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(","),
+          allow_methods=["GET"],
+          allow_headers=["*"],
+      )
+      ```
+    - Add `.env.example` entry: `ALLOWED_ORIGINS=https://yourproductiondomain.com`
+    - Write `api/tests/test_cors.py`:
+      - `test_allowed_origin_gets_header`: GET `/health` with `Origin: http://localhost:5173` →
+        response contains `Access-Control-Allow-Origin: http://localhost:5173`.
+      - `test_disallowed_origin_no_header`: same request with `Origin: https://evil.com` → response
+        does NOT contain `Access-Control-Allow-Origin`.
+      - `test_preflight_returns_200`: OPTIONS `/predict/weighted` with correct origin and
+        `Access-Control-Request-Method: GET` → 200 with CORS headers.
+    - Use `httpx.AsyncClient(app=app, base_url="http://test")` (already used in existing API tests).
+
+- [ ] **H2 — Rate limiting: 30 req/min per IP on prediction endpoints**
+  - Acceptance criteria:
+    - `GET /predict/weighted` and `GET /predict/strategies` return `HTTP 429` with a `Retry-After`
+      header when a single IP exceeds 30 requests within 60 seconds.
+    - Requests 1–30 succeed normally (`HTTP 200`).
+    - The `/health` endpoint is NOT rate-limited — it must always return `200` regardless of how many
+      prediction requests were made.
+  - Implementation notes:
+    - Add `slowapi` to `requirements.txt` (or `pyproject.toml` if used):
+      ```
+      slowapi>=0.1.9
+      ```
+    - Create `api/limiter.py`:
+      ```python
+      from slowapi import Limiter
+      from slowapi.util import get_remote_address
+      limiter = Limiter(key_func=get_remote_address)
+      ```
+    - In `api/main.py`:
+      ```python
+      from slowapi import _rate_limit_exceeded_handler
+      from slowapi.errors import RateLimitExceeded
+      from slowapi.middleware import SlowAPIMiddleware
+      from api.limiter import limiter
+
+      app.state.limiter = limiter
+      app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+      app.add_middleware(SlowAPIMiddleware)
+      ```
+    - Decorate each prediction route (do NOT decorate `/health`):
+      ```python
+      @app.get("/predict/weighted")
+      @limiter.limit("30/minute")
+      async def predict_weighted(request: Request, ...):
+          ...
+      ```
+    - Write `api/tests/test_rate_limiting.py`:
+      - `test_under_limit_succeeds`: send 30 requests → all `200`.
+      - `test_over_limit_returns_429`: send 31st request → `429` with `Retry-After` header present.
+      - `test_health_not_rate_limited`: send 35 requests to `/health` → all `200` (no 429).
+    - Note: in tests, reset the limiter between test functions using `limiter.reset()` or a fresh app
+      instance to avoid cross-test contamination.
+
+- [ ] **H3 — Health endpoint: structured response, exempt from rate limiting**
+  - Acceptance criteria:
+    - `GET /health` always returns `HTTP 200` with body `{"status": "ok", "version": "<semver>"}`.
+    - The version string is read from a single source of truth (e.g. `api/__version__.py` or
+      `pyproject.toml`) — not hard-coded in the route.
+    - The endpoint is NOT decorated with `@limiter.limit(...)` (confirmed by H2 test above).
+  - Implementation notes:
+    - Add `api/__version__.py`:
+      ```python
+      __version__ = "1.0.0"
+      ```
+    - In the health route:
+      ```python
+      from api.__version__ import __version__
+      @app.get("/health")
+      async def health():
+          return {"status": "ok", "version": __version__}
+      ```
+    - Write `api/tests/test_health.py` (or extend existing):
+      - `test_health_returns_ok`: GET `/health` → 200, body has `status == "ok"`.
+      - `test_health_includes_version`: body has `version` matching a semver pattern `\d+\.\d+\.\d+`.

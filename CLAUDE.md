@@ -7,10 +7,11 @@
 
 ## Stack
 
-- **Backend**: Python 3.14, pandas, scipy, numpy — `backend/`
-- **Frontend**: React 18, TypeScript (strict), Vite, Tailwind CSS — `frontend/`
-- **Test runners**: pytest (backend), Vitest (frontend)
-- **Static data**: `frontend/public/results.json` (1874 draws), `frontend/public/predictions.json` (engine output)
+- **Research**: Python 3.14, pandas, scipy, numpy — `research/` (engines, scrapers, notebooks)
+- **API**: FastAPI + uvicorn — `api/` (parametric endpoints, wraps research engines)
+- **Frontend**: React 18, TypeScript (strict), Vite, Tailwind CSS — `Frontend/`
+- **Test runners**: pytest (research + api), Vitest (frontend)
+- **Static data**: `Frontend/public/results.json` (1874 draws), `Frontend/public/predictions.json` (engine output)
 
 ## Conventions
 
@@ -22,32 +23,42 @@
 ## How to run
 
 ```
-# Backend tests
-cd backend && python -m pytest tests/ -q
+# Research/engine tests
+cd research && python -m pytest tests/ -q
+
+# API tests
+cd <repo-root> && python -m pytest api/tests/ -q
+
+# API dev server (http://localhost:8000)
+cd <repo-root> && uvicorn api.main:app --reload
 
 # Frontend tests + type check + build
-cd frontend && npm run test && npx tsc --noEmit && npm run build
+cd Frontend && npm run test && npx tsc --noEmit && npm run build
 
-# Dev server
-cd frontend && npm run dev
+# Frontend dev server (http://localhost:5173)
+cd Frontend && npm run dev
 
 # Refresh data (Excel → results.json → predictions.json)
-cd backend && python scripts/refresh_data.py
+cd research && python scripts/refresh_data.py
 
 # Regenerate predictions only (skip Excel step)
-cd backend && python scripts/refresh_data.py --predictions-only
+cd research && python scripts/refresh_data.py --predictions-only
 ```
 
 ## Data flow
 
 ```
 mylotto.co.nz
-   └─ mylotto_scraper.py  (downloads december.xlsx)
-      └─ scripts/refresh_data.py  (orchestrator — called by scraper before git commit)
-         ├─ src/utils/json_converter.py  → frontend/public/results.json
-         └─ src/core/prediction_engine.py → frontend/public/predictions.json
-                                             ↓
-                                     React fetches both at runtime
+   └─ research/src/scrapers/mylotto_scraper.py  (downloads december.xlsx)
+      └─ research/scripts/refresh_data.py  (orchestrator — called by scraper before git commit)
+         ├─ research/src/utils/json_converter.py  → Frontend/public/results.json
+         └─ research/src/core/prediction_engine.py → Frontend/public/predictions.json
+                                                       ↓
+                                             React fetches both at runtime (static, default view)
+
+api/                              ← parametric "generate your own" feature
+   GET /predict/weighted          ← frequency-weighted tickets with lean/spread/consecutive
+   GET /predict/strategies        ← 5-strategy engine with date_from filtering
 ```
 
 Both `results.json` and `predictions.json` are committed artifacts (not gitignored).

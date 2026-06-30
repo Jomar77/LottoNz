@@ -1,4 +1,4 @@
-import { LotteryResult, GenerationPreferences, GeneratedNumbers, PredictionSet, PredictionStrategy } from './types';
+import { LotteryResult, GenerationPreferences, GeneratedNumbers, PredictionSet, PredictionStrategy, StrategyId } from './types';
 
 /**
  * Enhanced Randomness Utilities
@@ -176,6 +176,83 @@ export function generateNumbers(
     numbers: [4, 8, 15, 16, 23, 42],
     powerball: generatePowerball()
   };
+}
+
+// ---------------------------------------------------------------------------
+// Strategy-based generation engine
+// ---------------------------------------------------------------------------
+
+function calculateRecentFrequencies(historicalData: LotteryResult[], count = 104): number[] {
+  const recent = historicalData.slice(0, count);
+  const freq = new Array(40).fill(0);
+  for (const result of recent) {
+    for (const num of result.numbers) {
+      freq[num - 1]++;
+    }
+  }
+  return freq;
+}
+
+function strategyBaseLambda(strategy: StrategyId, freq: number[], recentFreq: number[]): number[] {
+  const mx = Math.max(...freq);
+  switch (strategy) {
+    case 'hot':     return freq.map(f => Math.pow(f, 1.6));
+    case 'recent':  return recentFreq.map(r => Math.pow(r + 1, 1.8));
+    case 'overdue': return freq.map(f => Math.pow(mx + 20 - f, 1.8));
+    case 'decay':   return freq.map(f => f + 1);
+    default:        return freq.map(() => 1);
+  }
+}
+
+function combinedStrategyBase(strategies: StrategyId[], freq: number[], recentFreq: number[]): number[] {
+  const ids: StrategyId[] = strategies.length ? strategies : ['random'];
+  const acc = new Array(40).fill(0);
+  for (const id of ids) {
+    const b = strategyBaseLambda(id, freq, recentFreq);
+    const sum = b.reduce((s, v) => s + v, 0);
+    for (let i = 0; i < 40; i++) acc[i] += b[i] / sum;
+  }
+  return acc;
+}
+
+// Exponential competitive race: 6 numbers with shortest wait times win.
+function exponentialRacePick6(base: number[], mean: number): number[] {
+  const lam = base.map((b, i) => b * (1 + Math.exp(-Math.pow((i + 1) - mean, 2) / 162) * 3));
+  const tau = lam.map(l => {
+    let u = 0;
+    while (u === 0) u = cryptoRandom();
+    return -Math.log(u) / l;
+  });
+  return tau
+    .map((t, i) => [t, i + 1] as [number, number])
+    .sort((a, b) => a[0] - b[0])
+    .slice(0, 6)
+    .map(x => x[1])
+    .sort((a, b) => a - b);
+}
+
+export function generateWithStrategies(
+  historicalData: LotteryResult[],
+  strategies: StrategyId[],
+  preferences: GenerationPreferences
+): GeneratedNumbers {
+  const freqMap = calculateFrequencies(historicalData);
+  const freq = Array.from({ length: 40 }, (_, i) => freqMap.get(i + 1) || 0);
+  const recentFreq = calculateRecentFrequencies(historicalData);
+  const base = combinedStrategyBase(strategies, freq, recentFreq);
+  const mean = preferences.leaning === 'left' ? 11 : preferences.leaning === 'right' ? 30 : 20;
+
+  let last: number[] = [1, 8, 15, 22, 29, 36];
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const nums = exponentialRacePick6(base, mean);
+    last = nums;
+    const sp = nums[5] - nums[0];
+    const hasC = nums.some((v, i) => i < 5 && nums[i + 1] - v === 1);
+    const spreadOk = (preferences.spread === 'tight' && sp <= 18) || (preferences.spread === 'wide' && sp >= 22) || preferences.spread === 'mixed';
+    const consecOk = preferences.consecutive === 'yes' ? hasC : !hasC;
+    if (spreadOk && consecOk) return { numbers: nums, powerball: generatePowerball() };
+  }
+  return { numbers: last, powerball: generatePowerball() };
 }
 
 // ---------------------------------------------------------------------------
