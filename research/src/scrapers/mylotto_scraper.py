@@ -310,7 +310,7 @@ class MyLottoScraper:
             
             # Add the updated files
             files_to_add = [
-                'backend/src/lotto-data/december.xlsx',
+                'research/src/lotto-data/december.xlsx',
                 'frontend/public/results.json'
             ]
             

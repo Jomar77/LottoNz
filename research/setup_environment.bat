@@ -1,18 +1,18 @@
 @echo off
 REM ============================================================================
-REM LottoNZ Backend - Environment Setup Script
+REM LottoNZ Research - Environment Setup Script
 REM Fixes virtual environment and installs all dependencies
 REM ============================================================================
 
 echo ========================================================================
-echo LottoNZ Backend Environment Setup
+echo LottoNZ Research Environment Setup
 echo ========================================================================
 echo.
 
-REM Check if we're in Backend directory
+REM Check if we're in research directory
 if not exist "requirements.txt" (
-    echo ERROR: This script must be run from the Backend directory
-    echo Please run: cd Backend
+    echo ERROR: This script must be run from the research directory
+    echo Please run: cd research
     pause
     exit /b 1
 )
@@ -46,7 +46,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-echo Virtual environment created: Backend\.venv
+echo Virtual environment created: research\.venv
 echo.
 
 echo Step 4: Activating virtual environment...
@@ -89,7 +89,7 @@ echo ========================================================================
 echo ✓ Setup Complete!
 echo ========================================================================
 echo.
-echo Virtual environment: Backend\.venv
+echo Virtual environment: research\.venv
 echo.
 echo To activate in future sessions:
 echo   .venv\Scripts\activate

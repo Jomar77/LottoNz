@@ -1,7 +1,7 @@
 """
 Radioactive-Decay-Inspired Lottery Number Generator
 ----------------------------------------------------
-Run from the backend/ directory:
+Run from the research/ directory:
 
     python src/core/decay_generator.py
     python src/core/decay_generator.py --count 5

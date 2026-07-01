@@ -1,8 +1,8 @@
 """Contract tests for the predictions.json document (Phase A1/A2).
 
-These lock the single-source-of-truth schema that both the backend engine
+These lock the single-source-of-truth schema that both the research engine
 (Phase B) and the frontend display (Phase C) code against. See
-``backend/docs/predictions_contract.md`` for the human-readable contract.
+``research/docs/predictions_contract.md`` for the human-readable contract.
 """
 
 import copy
@@ -14,7 +14,7 @@ import pytest
 from src.core.predictions_schema import validate_predictions_document
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FIXTURE_PATH = REPO_ROOT / "backend" / "tests" / "fixtures" / "predictions.sample.json"
+FIXTURE_PATH = REPO_ROOT / "research" / "tests" / "fixtures" / "predictions.sample.json"
 FRONTEND_FIXTURE_PATH = REPO_ROOT / "frontend" / "public" / "predictions.sample.json"
 
 STRATEGIES = [
@@ -214,7 +214,7 @@ def test_chi_square_p_must_be_float_in_range():
 # --- A2: shared fixture ----------------------------------------------------
 
 def test_fixture_file_exists_and_is_valid():
-    assert FIXTURE_PATH.exists(), f"missing backend fixture: {FIXTURE_PATH}"
+    assert FIXTURE_PATH.exists(), f"missing research fixture: {FIXTURE_PATH}"
     doc = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     assert validate_predictions_document(doc) == []
 

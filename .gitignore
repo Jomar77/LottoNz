@@ -37,8 +37,8 @@ Thumbs.db
 venv/
 env/
 ENV/
-Backend/.venv/
-Backend/venv/
+research/.venv/
+research/venv/
 
 # Testing
 .pytest_cache/
@@ -79,13 +79,13 @@ Data/processed/*.csv
 # LOGS
 # ===================================
 *.log
-Backend/src/Scrapers/scraper.log
+research/src/Scrapers/scraper.log
 
 # ===================================
 # RUNTIME FILES
 # ===================================
-Backend/src/Scrapers/last_run.json
-Backend/task_schedule.xml
+research/src/Scrapers/last_run.json
+research/task_schedule.xml
 
 # ===================================
 # IDE & EDITORS

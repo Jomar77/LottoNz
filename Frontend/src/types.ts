@@ -23,7 +23,7 @@ export interface GeneratedNumbers {
 }
 
 // --- Predictions contract -------------------------------------------------
-// Mirrors backend/docs/predictions_contract.md (the authority). snake_case keys
+// Mirrors research/docs/predictions_contract.md (the authority). snake_case keys
 // match predictions.json exactly — no remapping. Do not redefine these elsewhere.
 
 export type PredictionStrategy =

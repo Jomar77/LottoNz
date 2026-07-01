@@ -1,6 +1,6 @@
 """Schema validator for the predictions.json document (single source of truth).
 
-The human-readable contract lives in ``backend/docs/predictions_contract.md``.
+The human-readable contract lives in ``research/docs/predictions_contract.md``.
 This module encodes it as :func:`validate_predictions_document`, which returns a
 list of human-readable error strings (empty list == valid). The frontend mirrors
 this contract via the TypeScript types in ``frontend/src/types.ts``.

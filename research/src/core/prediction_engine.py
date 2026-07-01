@@ -2,7 +2,7 @@
 
 Reads historical draws from ``frontend/public/results.json`` and produces a
 static ``frontend/public/predictions.json`` containing five strategically
-distinct number sets. See ``backend/docs/predictions_contract.md`` for the
+distinct number sets. See ``research/docs/predictions_contract.md`` for the
 output contract and ``new-algo.md`` for the analytical framework.
 
 > NZ Lotto draws are independent, uniform-random events. The "strategies" here

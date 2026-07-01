@@ -1,16 +1,16 @@
-# LottoNZ Backend - Environment Setup Script
+# LottoNZ Research - Environment Setup Script
 # Fixes virtual environment and installs all dependencies
 # For Windows PowerShell
 
 Write-Host "========================================================================" -ForegroundColor Cyan
-Write-Host "LottoNZ Backend Environment Setup" -ForegroundColor Cyan
+Write-Host "LottoNZ Research Environment Setup" -ForegroundColor Cyan
 Write-Host "========================================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check if we're in Backend directory
+# Check if we're in research directory
 if (-not (Test-Path "requirements.txt")) {
-    Write-Host "ERROR: This script must be run from the Backend directory" -ForegroundColor Red
-    Write-Host "Please run: cd Backend" -ForegroundColor Yellow
+    Write-Host "ERROR: This script must be run from the research directory" -ForegroundColor Red
+    Write-Host "Please run: cd research" -ForegroundColor Yellow
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -44,7 +44,7 @@ if ($LASTEXITCODE -ne 0) {
     Read-Host "Press Enter to exit"
     exit 1
 }
-Write-Host "Virtual environment created: Backend\.venv" -ForegroundColor Green
+Write-Host "Virtual environment created: research\.venv" -ForegroundColor Green
 Write-Host ""
 
 Write-Host "Step 4: Activating virtual environment..." -ForegroundColor Yellow
@@ -82,7 +82,7 @@ Write-Host "====================================================================
 Write-Host "✓ Setup Complete!" -ForegroundColor Green
 Write-Host "========================================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Virtual environment: Backend\.venv" -ForegroundColor White
+Write-Host "Virtual environment: research\.venv" -ForegroundColor White
 Write-Host ""
 Write-Host "To activate in future sessions:" -ForegroundColor White
 Write-Host "  .venv\Scripts\Activate.ps1" -ForegroundColor Gray
