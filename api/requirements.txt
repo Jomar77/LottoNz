@@ -1,0 +1,6 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+# Engine deps (already installed if you ran research/requirements.txt)
+pandas>=2.1.0
+numpy>=1.26.0
+scipy>=1.11.0
