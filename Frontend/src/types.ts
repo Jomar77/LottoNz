@@ -14,7 +14,7 @@ export interface GenerationPreferences {
   consecutive: ConsecutiveType;
 }
 
-export type EngineType = 'gaussian' | 'strategy';
+export type EngineType = 'gaussian' | 'strategy' | 'live';
 export type StrategyId = 'hot' | 'recent' | 'overdue' | 'decay' | 'random';
 
 export interface GeneratedNumbers {
