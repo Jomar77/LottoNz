@@ -27,7 +27,8 @@ Generate NZ Lotto number sets using two distinct engines.
 | Endpoint | What it does |
 |---|---|
 | `GET /predict/weighted` | Frequency-weighted tickets with lean / spread / consecutive constraints |
-| `GET /predict/strategies` | Five algorithm-distinct strategy sets, optionally filtered by date window |
+| `GET /predict/strategies` | Five algorithm-distinct strategy sets, optionally filtered by date window (constraints advisory only) |
+| `GET /predict/strategies/weighted` | Same five strategy sets, with lean / spread / consecutive constraints enforced via minimal-swap repair |
 | `GET /health` | Sanity check — confirms data is loaded |
 
 ## Interactive docs
